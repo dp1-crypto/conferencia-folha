@@ -572,13 +572,14 @@ def compare(excel: dict, pdf: dict, word: dict) -> dict:
         }
 
         # ── Presença ────────────────────────────────────────────────────────
-        if not exc:
+        # Só aponta ausência se o respectivo tipo de arquivo foi enviado
+        if not exc and excel:
             emp["divs"].append({
                 "g": "alta",
                 "tipo": "Ausente na planilha",
                 "desc": "Funcionário tem recibo mas não está na planilha Excel.",
             })
-        if not rec:
+        if not rec and pdf:
             emp["divs"].append({
                 "g": "alta",
                 "tipo": "Sem recibo PDF",
