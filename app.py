@@ -37,6 +37,82 @@ def fmt_brl(v) -> str:
         return str(v)
 
 # ─────────────────────────────────────────────
+# TOLERÂNCIAS E GRUPOS DE RUBRICAS
+# ─────────────────────────────────────────────
+
+TOLERANCIA_CENTAVOS    = 0.02   # diferença até R$ 0,02 = arredondamento
+TOLERANCIA_DIVERGENCIA = 0.05   # acima disso = divergência real
+
+RUBRIC_GROUPS = {
+    "COMISSAO": [
+        "COMISSAO", "COMISSOES", "COMISSAO VENDA", "COMISSAO SOBRE VENDAS",
+        "COMISSAO DE VENDAS", "COMISSAO MENSAL", "COMISSAO FUNCIONARIO",
+        "COMISSOES DE VENDAS",
+    ],
+    "DSR": [
+        "DSR", "D S R", "D.S.R", "DESCANSO SEMANAL REMUNERADO",
+        "REPOUSO SEMANAL REMUNERADO", "DSR SOBRE COMISSAO", "DSR COMISSAO",
+        "DSR S COMISSAO", "DSR S COMISSOES",
+    ],
+    "COMISSAO_E_DSR": [
+        "COMISSAO E DSR", "COMISSOES E DSR", "COMISSAO DSR", "COMISSAO + DSR",
+    ],
+    "VALE_TRANSPORTE": [
+        "VALE TRANSPORTE", "VT", "V T", "TRANSPORTE",
+        "DESCONTO VALE TRANSPORTE", "DESC VT", "D VT",
+    ],
+    "VALE_ALIMENTACAO": [
+        "VALE ALIMENTACAO", "VA", "V A", "ALIMENTACAO",
+        "TICKET ALIMENTACAO", "VALE ALIMENTACAO", "DESCONTO VALE ALIMENTACAO",
+    ],
+    "VALE_REFEICAO": [
+        "VALE REFEICAO", "VR", "V R", "REFEICAO",
+        "TICKET REFEICAO", "DESCONTO VALE REFEICAO",
+    ],
+    "PLANO_SAUDE": [
+        "PLANO DE SAUDE", "ASSISTENCIA MEDICA", "CONVENIO MEDICO",
+        "UNIMED", "AMIL", "SULAMERICA SAUDE", "PLANO SAUDE",
+    ],
+    "ODONTO": [
+        "PLANO ODONTOLOGICO", "ODONTO", "ODONTOLOGICO",
+        "ASSISTENCIA ODONTOLOGICA", "CONVENIO ODONTO",
+    ],
+    "ADIANTAMENTO": [
+        "ADIANTAMENTO", "ADIANTAMENTO SALARIAL", "VALE SALARIAL",
+    ],
+}
+
+# Índice invertido: texto normalizado → chave do grupo
+_RUBRIC_INDEX: dict = {}
+def _build_rubric_index():
+    def _n(t):
+        t = t.upper().strip()
+        t = "".join(c for c in unicodedata.normalize("NFD", t) if unicodedata.category(c) != "Mn")
+        t = re.sub(r"[^\w\s]", "", t)
+        return " ".join(t.split())
+    for group, variants in RUBRIC_GROUPS.items():
+        for v in variants:
+            _RUBRIC_INDEX[_n(v)] = group
+_build_rubric_index()
+
+def normalize_rubric(text: str) -> str:
+    """
+    Normaliza rubrica e retorna o grupo canônico (ex: 'COMISSAO_E_DSR')
+    ou a rubrica normalizada se não houver grupo correspondente.
+    Remove código numérico inicial (ex: '8781 SALARIO' → 'SALARIO').
+    """
+    t = str(text).upper().strip()
+    # Remove acento
+    t = "".join(c for c in unicodedata.normalize("NFD", t) if unicodedata.category(c) != "Mn")
+    # Remove código numérico inicial
+    t = re.sub(r"^\d+\s+", "", t)
+    # Remove pontuação
+    t = re.sub(r"[^\w\s]", "", t)
+    # Colapsa espaços
+    t = " ".join(t.split())
+    return _RUBRIC_INDEX.get(t, t)
+
+# ─────────────────────────────────────────────
 # PARSER EXCEL
 # ─────────────────────────────────────────────
 
@@ -328,7 +404,7 @@ def parse_word(raw: bytes) -> dict:
     doc = Document(io.BytesIO(raw))
     text = "\n".join(p.text for p in doc.paragraphs)
 
-    result = {"gratificacoes": {}, "descontos": {}, "obs": [], "decimo_terceiro": []}
+    result = {"gratificacoes": {}, "descontos": {}, "obs": [], "decimo_terceiro": [], "comissao_e_dsr": {}}
 
     # Gratificações
     m = re.search(
@@ -384,6 +460,10 @@ def parse_word(raw: bytes) -> dict:
     if not result["gratificacoes"] and not result["descontos"]:
         lines = [l.strip() for l in text.split("\n") if l.strip()]
         if len(lines) >= 3:
+            # Detecta o tipo da seção pelo título (linha 0)
+            titulo_norm = normalize_rubric(lines[0])
+            is_comissao_dsr = titulo_norm in ("COMISSAO_E_DSR", "COMISSAO E DSR")
+
             # Detecta se é padrão nome/valor: linhas alternadas texto/número
             pares = []
             i = 1  # pula título (linha 0)
@@ -401,7 +481,10 @@ def parse_word(raw: bytes) -> dict:
                     val = brl(val_str)
                     name = norm(nome)
                     if val > 0 and len(name) >= 2:  # aceita nome com 1 palavra
-                        result["gratificacoes"][name] = val
+                        if is_comissao_dsr:
+                            result["comissao_e_dsr"][name] = val
+                        else:
+                            result["gratificacoes"][name] = val
 
     return result
 
@@ -506,7 +589,7 @@ def compare(excel: dict, pdf: dict, word: dict) -> dict:
         if exc and rec and exc.get("has_liquido", True):
             el = exc.get("liquido", 0)
             rl = rec.get("liquido", 0)
-            if el > 0 and abs(el - rl) > 0.05:
+            if el > 0 and abs(el - rl) > TOLERANCIA_DIVERGENCIA:
                 emp["divs"].append({
                     "g": "alta",
                     "tipo": "Líquido divergente",
@@ -549,7 +632,7 @@ def compare(excel: dict, pdf: dict, word: dict) -> dict:
                         "tipo": f"{label} ausente no recibo",
                         "desc": f"Planilha indica {label} de {fmt_brl(val)}, mas não encontrado no recibo.",
                     })
-                elif abs(v.get("valor", 0) - val) > 0.05:
+                elif abs(v.get("valor", 0) - val) > TOLERANCIA_DIVERGENCIA:
                     emp["divs"].append({
                         "g": "media",
                         "tipo": f"{label} divergente",
@@ -628,7 +711,7 @@ def compare(excel: dict, pdf: dict, word: dict) -> dict:
                         ),
                     })
                 exc_g = (exc or {}).get("gratificacao", 0)
-                if exc_g > 0 and abs(exc_g - gratif) > 0.05:
+                if exc_g > 0 and abs(exc_g - gratif) > TOLERANCIA_DIVERGENCIA:
                     emp["divs"].append({
                         "g": "media",
                         "tipo": "Valor de gratificação divergente",
@@ -642,7 +725,7 @@ def compare(excel: dict, pdf: dict, word: dict) -> dict:
                 verbas = (rec or {}).get("verbas", [])
                 found = any(
                     tipo_desc.upper() in v.get("descricao", "").upper()
-                    or abs(v.get("valor", 0) - val) < 0.05
+                    or abs(v.get("valor", 0) - val) < TOLERANCIA_DIVERGENCIA
                     for v in verbas
                 )
                 if not found and rec:
@@ -655,6 +738,56 @@ def compare(excel: dict, pdf: dict, word: dict) -> dict:
                         ),
                     })
 
+        # ── Comissão + DSR (Word → Recibo) ──────────────────────────────────
+        if word:
+            cdsr = word.get("comissao_e_dsr", {})
+            val_word = cdsr.get(exc_key or name) or cdsr.get(pdf_key or name) or 0
+            if not val_word:
+                first = (exc_key or pdf_key or name or "").split()[0] if (exc_key or pdf_key or name) else ""
+                if first:
+                    for wk, wv in cdsr.items():
+                        if wk.split()[0] == first:
+                            val_word = wv
+                            break
+            if val_word and val_word > 0 and rec:
+                val_recibo = sum(
+                    v["valor"] for v in rec.get("verbas", [])
+                    if normalize_rubric(v["descricao"]) in ("COMISSAO", "DSR", "COMISSAO_E_DSR")
+                )
+                diff = round(abs(val_word - val_recibo), 2)
+                mem = {
+                    "word_valor": val_word,
+                    "recibo_verbas": [
+                        {"desc": v["descricao"], "valor": v["valor"]}
+                        for v in rec.get("verbas", [])
+                        if normalize_rubric(v["descricao"]) in ("COMISSAO", "DSR", "COMISSAO_E_DSR")
+                    ],
+                    "recibo_total": val_recibo,
+                    "diferenca": diff,
+                }
+                if diff <= TOLERANCIA_CENTAVOS:
+                    emp["memoria_comissao_dsr"] = {**mem, "status": "OK"}
+                elif val_word > val_recibo:
+                    emp["divs"].append({
+                        "g": "alta",
+                        "tipo": "DIFERENÇA A PAGAR",
+                        "desc": (
+                            f"Comissão+DSR — Word: {fmt_brl(val_word)} | "
+                            f"Recibo: {fmt_brl(val_recibo)} | Falta: {fmt_brl(diff)}"
+                        ),
+                        "memoria": mem,
+                    })
+                else:
+                    emp["divs"].append({
+                        "g": "media",
+                        "tipo": "PAGO A MAIOR",
+                        "desc": (
+                            f"Comissão+DSR — Word: {fmt_brl(val_word)} | "
+                            f"Recibo: {fmt_brl(val_recibo)} | Excesso: {fmt_brl(diff)}"
+                        ),
+                        "memoria": mem,
+                    })
+
         if emp["divs"]:
             emp["status"] = "DIVERGENTE"
             report["resumo"]["divergencias"] += 1
@@ -662,6 +795,21 @@ def compare(excel: dict, pdf: dict, word: dict) -> dict:
             report["resumo"]["ok"] += 1
 
         report["funcionarios"].append(emp)
+
+    # ── Possíveis homônimos ──────────────────────────────────────────────
+    possiveis = []
+    nomes = [c for c in all_names if canonical[c]["pdf_key"]]
+    for i in range(len(nomes)):
+        for j in range(i + 1, len(nomes)):
+            a_words = nomes[i].split()
+            b_words = nomes[j].split()
+            if (len(a_words) >= 2 and len(b_words) >= 2
+                    and a_words[:2] == b_words[:2] and nomes[i] != nomes[j]):
+                possiveis.append({
+                    "nomes": [nomes[i], nomes[j]],
+                    "aviso": "Possível homônimo: mesmas 2 primeiras palavras",
+                })
+    report["possiveis_homonimos"] = possiveis
 
     return report
 
@@ -1263,6 +1411,7 @@ def analisar():
             elif fn.endswith((".docx", ".doc")):
                 parsed = parse_word(raw)
                 word_data.setdefault("gratificacoes", {}).update(parsed.get("gratificacoes", {}))
+                word_data.setdefault("comissao_e_dsr", {}).update(parsed.get("comissao_e_dsr", {}))
                 word_data.setdefault("descontos", {}).update(parsed.get("descontos", {}))
                 word_data.setdefault("obs", []).extend(parsed.get("obs", []))
                 word_data.setdefault("decimo_terceiro", []).extend(parsed.get("decimo_terceiro", []))
