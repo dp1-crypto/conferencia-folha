@@ -379,6 +379,30 @@ def parse_word(raw: bytes) -> dict:
         l.strip() for l in text.split("\n") if re.match(r"OBS|Obs", l.strip())
     ]
 
+    # Fallback: formato lista simples (título na 1ª linha, depois nome\nvalor alternados)
+    # Ex: "comissões e DSR\nNadyane\n1592,11\nJuliana\n1255,49"
+    if not result["gratificacoes"] and not result["descontos"]:
+        lines = [l.strip() for l in text.split("\n") if l.strip()]
+        if len(lines) >= 3:
+            # Detecta se é padrão nome/valor: linhas alternadas texto/número
+            pares = []
+            i = 1  # pula título (linha 0)
+            while i < len(lines) - 1:
+                nome_linha = lines[i]
+                val_linha = lines[i + 1]
+                val_clean = val_linha.replace(".", "").replace(",", ".").replace(" ", "")
+                if re.match(r"^\d+(\.\d+)?$", val_clean):
+                    pares.append((nome_linha, val_linha))
+                    i += 2
+                else:
+                    i += 1
+            if pares:
+                for nome, val_str in pares:
+                    val = brl(val_str)
+                    name = norm(nome)
+                    if val > 0 and len(name) >= 2:  # aceita nome com 1 palavra
+                        result["gratificacoes"][name] = val
+
     return result
 
 # ─────────────────────────────────────────────
@@ -582,9 +606,17 @@ def compare(excel: dict, pdf: dict, word: dict) -> dict:
 
         # ── Gratificações (Word → Recibo) ────────────────────────────────────
         if word:
-            # Word pode usar nome abreviado ou completo — testa ambos
+            # Word pode usar nome abreviado, completo ou apenas primeiro nome
             wg = word.get("gratificacoes", {})
             gratif = wg.get(exc_key or name) or wg.get(pdf_key or name) or 0
+            # Fallback: match por primeiro nome (quando Word usa só "NADYANE")
+            if not gratif:
+                first_name = (exc_key or pdf_key or name or "").split()[0] if (exc_key or pdf_key or name) else ""
+                if first_name:
+                    for wk, wv in wg.items():
+                        if wk.split()[0] == first_name:
+                            gratif = wv
+                            break
             if gratif > 0:
                 if rec and not rec.get("has_gratif", False):
                     emp["divs"].append({
