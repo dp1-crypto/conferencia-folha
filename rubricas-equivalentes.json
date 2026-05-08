@@ -1,0 +1,266 @@
+{
+  "_meta": {
+    "versao": "1.1",
+    "descricao": "Equivalências de rubricas — Sigma Contabilidade",
+    "instrucoes": [
+      "Adicione novas variações de nomes nas listas 'variantes' conforme aparecerem nos documentos.",
+      "Use MAIÚSCULAS SEM ACENTOS — o sistema normaliza automaticamente.",
+      "Não remova variantes existentes sem verificar impacto nos relatórios.",
+      "O campo 'tipo' define se é provento (+) ou desconto (-) para fins de conferência.",
+      "Ao receber sugestão de nova equivalência na interface, adicione aqui e reinicie o app."
+    ],
+    "ultimo_update": "2026-05-08"
+  },
+  "grupos": {
+    "COMISSAO": {
+      "descricao": "Comissão sobre vendas",
+      "tipo": "provento",
+      "variantes": [
+        "COMISSAO",
+        "COMISSOES",
+        "COMISSAO VENDA",
+        "COMISSAO SOBRE VENDAS",
+        "COMISSAO DE VENDAS",
+        "COMISSAO MENSAL",
+        "COMISSAO FUNCIONARIO",
+        "COMISSOES DE VENDAS",
+        "COMISSAO VENDEDOR",
+        "COMISSAO VENDAS",
+        "COMISSAO DIRETORES",
+        "COMISSAO GERENTE"
+      ]
+    },
+    "DSR": {
+      "descricao": "Descanso / Repouso Semanal Remunerado",
+      "tipo": "provento",
+      "variantes": [
+        "DSR",
+        "D S R",
+        "D.S.R",
+        "DESCANSO SEMANAL REMUNERADO",
+        "REPOUSO SEMANAL REMUNERADO",
+        "DSR SOBRE COMISSAO",
+        "DSR COMISSAO",
+        "DSR S COMISSAO",
+        "DSR S COMISSOES",
+        "DSR S COMISSAO",
+        "REFLEXO COMISSOES DSR",
+        "REFLEXO DSR",
+        "REFLEXO DE DSR",
+        "REFLEXO COMISSAO DSR",
+        "REFLEXO DSR COMISSOES",
+        "RSR",
+        "RSR SOBRE COMISSAO",
+        "REPOUSO SEMANAL"
+      ]
+    },
+    "COMISSAO_E_DSR": {
+      "descricao": "Comissão e DSR agrupados em um único lançamento",
+      "tipo": "provento",
+      "variantes": [
+        "COMISSAO E DSR",
+        "COMISSOES E DSR",
+        "COMISSAO DSR",
+        "COMISSAO + DSR",
+        "COMISSOES + DSR",
+        "COMISSAO E REPOUSO",
+        "COMISSAO E RSR"
+      ]
+    },
+    "VALE_TRANSPORTE": {
+      "descricao": "Vale Transporte",
+      "tipo": "desconto",
+      "variantes": [
+        "VALE TRANSPORTE",
+        "VT",
+        "V T",
+        "TRANSPORTE",
+        "DESCONTO VALE TRANSPORTE",
+        "DESC VT",
+        "D VT",
+        "TICKET TRANSPORTE",
+        "AUXILIO TRANSPORTE",
+        "BENEFICIO TRANSPORTE",
+        "DESCONTO TRANSPORTE"
+      ]
+    },
+    "VALE_ALIMENTACAO": {
+      "descricao": "Vale Alimentação",
+      "tipo": "desconto",
+      "variantes": [
+        "VALE ALIMENTACAO",
+        "VA",
+        "V A",
+        "ALIMENTACAO",
+        "TICKET ALIMENTACAO",
+        "DESCONTO VALE ALIMENTACAO",
+        "DESC ALIMENTACAO",
+        "DESC VA",
+        "D VA",
+        "AUXILIO ALIMENTACAO",
+        "BENEFICIO ALIMENTACAO",
+        "VALE ALIMENTACAO DESCONTO"
+      ]
+    },
+    "VALE_REFEICAO": {
+      "descricao": "Vale Refeição",
+      "tipo": "desconto",
+      "variantes": [
+        "VALE REFEICAO",
+        "VR",
+        "V R",
+        "REFEICAO",
+        "TICKET REFEICAO",
+        "DESCONTO VALE REFEICAO",
+        "DESC REFEICAO",
+        "DESC VR",
+        "D VR",
+        "AUXILIO REFEICAO",
+        "TICKET RESTAURANTE"
+      ]
+    },
+    "PLANO_SAUDE": {
+      "descricao": "Plano de Saúde / Convênio Médico",
+      "tipo": "desconto",
+      "variantes": [
+        "PLANO DE SAUDE",
+        "PLANO SAUDE",
+        "ASSISTENCIA MEDICA",
+        "CONVENIO MEDICO",
+        "UNIMED",
+        "AMIL",
+        "SULAMERICA SAUDE",
+        "PLANO MEDICO",
+        "CONVENIO SAUDE",
+        "BRADESCO SAUDE",
+        "HAPVIDA",
+        "NOTREDAME",
+        "SAUDE",
+        "DESCONTO PLANO SAUDE",
+        "DESC PLANO SAUDE"
+      ]
+    },
+    "ODONTO": {
+      "descricao": "Plano Odontológico",
+      "tipo": "desconto",
+      "variantes": [
+        "PLANO ODONTOLOGICO",
+        "ODONTO",
+        "ODONTOLOGICO",
+        "ASSISTENCIA ODONTOLOGICA",
+        "CONVENIO ODONTO",
+        "UNODONTO",
+        "UNIODONTO",
+        "ODONTOPREV",
+        "SORRIDENTS",
+        "DENTAL",
+        "DESCONTO ODONTO",
+        "DESC ODONTO",
+        "PLANO DENTAL"
+      ]
+    },
+    "ADIANTAMENTO": {
+      "descricao": "Adiantamento Salarial",
+      "tipo": "desconto",
+      "variantes": [
+        "ADIANTAMENTO",
+        "ADIANTAMENTO SALARIAL",
+        "VALE SALARIAL",
+        "ADIANTAMENTO 1 PARCELA",
+        "ADIANTAMENTO QUINZENAL",
+        "ADTO SALARIAL",
+        "ADTO",
+        "1 PARCELA SALARIO"
+      ]
+    },
+    "PREMIO": {
+      "descricao": "Prêmio / Bônus / PPR / PLR / Gratificação de desempenho",
+      "tipo": "provento",
+      "variantes": [
+        "PREMIO",
+        "PREMIOS",
+        "PREMIACAO",
+        "PREMIO DE PRODUCAO",
+        "PREMIO PRODUCAO",
+        "BONUS",
+        "BONUS DE PRODUCAO",
+        "BONUS DESEMPENHO",
+        "PREMIO PPR",
+        "PPR",
+        "PLR",
+        "PREMIO PLR",
+        "PARTICIPACAO LUCROS",
+        "PARTICIPACAO NOS LUCROS",
+        "PARTICIPACOES NOS LUCROS",
+        "GRATIFICACAO",
+        "GRATIFICACAO PRODUCAO",
+        "PREMIO DESEMPENHO",
+        "PREMIO CUMPRIMENTO META",
+        "PREMIO ASSIDUIDADE",
+        "INCENTIVO",
+        "BONUS ANUAL"
+      ]
+    },
+    "HORA_EXTRA": {
+      "descricao": "Hora Extra",
+      "tipo": "provento",
+      "variantes": [
+        "HORA EXTRA",
+        "HORAS EXTRAS",
+        "H EXTRA",
+        "H.EXTRA",
+        "HE 50",
+        "HE 100",
+        "HORA EXTRA 50",
+        "HORA EXTRA 100",
+        "ADICIONAL HORA EXTRA",
+        "EXTRA",
+        "HORA EXTRA 50 PORCENTO",
+        "HORA EXTRA 100 PORCENTO"
+      ]
+    },
+    "DESCONTO_INDEVIDO": {
+      "descricao": "Desconto não autorizado, indevido ou a ser estornado",
+      "tipo": "desconto",
+      "variantes": [
+        "DESCONTO INDEVIDO",
+        "DESCONTO BENEFICIO",
+        "DESC BENEFICIO",
+        "DESCONTO NAO AUTORIZADO",
+        "ESTORNO DESCONTO",
+        "DESCONTO INCORRETO"
+      ]
+    },
+    "ADICIONAL_NOTURNO": {
+      "descricao": "Adicional Noturno",
+      "tipo": "provento",
+      "variantes": [
+        "ADICIONAL NOTURNO",
+        "NOTURNO",
+        "ADIC NOTURNO",
+        "ADD NOTURNO",
+        "HORA NOTURNA"
+      ]
+    },
+    "INSALUBRIDADE": {
+      "descricao": "Adicional de Insalubridade",
+      "tipo": "provento",
+      "variantes": [
+        "INSALUBRIDADE",
+        "ADICIONAL INSALUBRIDADE",
+        "ADIC INSALUBRIDADE",
+        "ADD INSALUBRIDADE"
+      ]
+    },
+    "PERICULOSIDADE": {
+      "descricao": "Adicional de Periculosidade",
+      "tipo": "provento",
+      "variantes": [
+        "PERICULOSIDADE",
+        "ADICIONAL PERICULOSIDADE",
+        "ADIC PERICULOSIDADE",
+        "ADD PERICULOSIDADE"
+      ]
+    }
+  }
+}

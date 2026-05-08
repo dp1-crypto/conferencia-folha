@@ -4,10 +4,46 @@ Sigma Contabilidade — Conferência de Folha de Pagamento
 Compara Word (instruções) + Excel (planilha) + PDF (recibos)
 """
 from flask import Flask, render_template_string, request, jsonify
-import io, re, unicodedata, os
+import io, re, unicodedata, os, json
+from decimal import Decimal, ROUND_HALF_UP
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # 100 MB
+
+# ─────────────────────────────────────────────
+# CARREGAMENTO DE RUBRICAS DO JSON
+# ─────────────────────────────────────────────
+
+_JSON_PATH = os.path.join(os.path.dirname(__file__), "rubricas-equivalentes.json")
+
+def _load_rubric_groups() -> dict:
+    """
+    Carrega grupos de rubricas do arquivo JSON editável.
+    Fallback para dict vazio se arquivo não existir.
+    """
+    if not os.path.exists(_JSON_PATH):
+        return {}
+    try:
+        with open(_JSON_PATH, encoding="utf-8") as f:
+            data = json.load(f)
+        grupos = data.get("grupos", {})
+        # Retorna apenas as listas de variantes, compatível com o resto do código
+        return {k: v.get("variantes", []) for k, v in grupos.items()}
+    except Exception as e:
+        print(f"[AVISO] Não foi possível carregar rubricas-equivalentes.json: {e}")
+        return {}
+
+def _load_rubric_meta() -> dict:
+    """Carrega metadados dos grupos (descricao, tipo) para uso nas sugestões."""
+    if not os.path.exists(_JSON_PATH):
+        return {}
+    try:
+        with open(_JSON_PATH, encoding="utf-8") as f:
+            data = json.load(f)
+        return {k: {"descricao": v.get("descricao", k), "tipo": v.get("tipo", "provento")}
+                for k, v in data.get("grupos", {}).items()}
+    except Exception:
+        return {}
 
 # ─────────────────────────────────────────────
 # UTILITÁRIOS
@@ -22,11 +58,31 @@ def norm(s: str) -> str:
 def brl(s) -> float:
     """Converte string monetária BR para float."""
     s = re.sub(r"[R$\s]", "", str(s))
+    # Suporte a negativos entre parênteses: (1.000,00)
+    negativo = s.startswith("(") and s.endswith(")")
+    s = s.strip("()")
     s = s.replace(".", "").replace(",", ".")
     try:
-        return float(s)
+        v = float(s)
+        return -v if negativo else v
     except Exception:
         return 0.0
+
+def brl_dec(s) -> Decimal:
+    """
+    Converte string monetária BR para Decimal com precisão centesimal.
+    Use para cálculos financeiros críticos onde float introduz erro de arredondamento.
+    Exemplos: '1.592,11' → Decimal('1592.11'), '(300,00)' → Decimal('-300.00')
+    """
+    s = re.sub(r"[R$\s]", "", str(s))
+    negativo = s.startswith("(") and s.endswith(")")
+    s = s.strip("()")
+    s = s.replace(".", "").replace(",", ".")
+    try:
+        v = Decimal(s).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        return -v if negativo else v
+    except Exception:
+        return Decimal("0.00")
 
 def fmt_brl(v) -> str:
     if not v:
@@ -43,59 +99,48 @@ def fmt_brl(v) -> str:
 TOLERANCIA_CENTAVOS    = 0.02   # diferença até R$ 0,02 = arredondamento
 TOLERANCIA_DIVERGENCIA = 0.05   # acima disso = divergência real
 
-RUBRIC_GROUPS = {
-    "COMISSAO": [
-        "COMISSAO", "COMISSOES", "COMISSAO VENDA", "COMISSAO SOBRE VENDAS",
-        "COMISSAO DE VENDAS", "COMISSAO MENSAL", "COMISSAO FUNCIONARIO",
-        "COMISSOES DE VENDAS",
-    ],
-    "DSR": [
-        "DSR", "D S R", "D.S.R", "DESCANSO SEMANAL REMUNERADO",
-        "REPOUSO SEMANAL REMUNERADO", "DSR SOBRE COMISSAO", "DSR COMISSAO",
-        "DSR S COMISSAO", "DSR S COMISSOES",
-        "REFLEXO COMISSOES DSR", "REFLEXO DSR", "REFLEXO DE DSR",
-        "REFLEXO COMISSAO DSR", "REFLEXO DSR COMISSOES",
-    ],
-    "COMISSAO_E_DSR": [
-        "COMISSAO E DSR", "COMISSOES E DSR", "COMISSAO DSR", "COMISSAO + DSR",
-    ],
-    "VALE_TRANSPORTE": [
-        "VALE TRANSPORTE", "VT", "V T", "TRANSPORTE",
-        "DESCONTO VALE TRANSPORTE", "DESC VT", "D VT",
-    ],
-    "VALE_ALIMENTACAO": [
-        "VALE ALIMENTACAO", "VA", "V A", "ALIMENTACAO",
-        "TICKET ALIMENTACAO", "VALE ALIMENTACAO", "DESCONTO VALE ALIMENTACAO",
-    ],
-    "VALE_REFEICAO": [
-        "VALE REFEICAO", "VR", "V R", "REFEICAO",
-        "TICKET REFEICAO", "DESCONTO VALE REFEICAO",
-    ],
-    "PLANO_SAUDE": [
-        "PLANO DE SAUDE", "ASSISTENCIA MEDICA", "CONVENIO MEDICO",
-        "UNIMED", "AMIL", "SULAMERICA SAUDE", "PLANO SAUDE",
-    ],
-    "ODONTO": [
-        "PLANO ODONTOLOGICO", "ODONTO", "ODONTOLOGICO",
-        "ASSISTENCIA ODONTOLOGICA", "CONVENIO ODONTO",
-    ],
-    "ADIANTAMENTO": [
-        "ADIANTAMENTO", "ADIANTAMENTO SALARIAL", "VALE SALARIAL",
-    ],
-}
+# Carrega grupos do JSON editável (rubricas-equivalentes.json)
+RUBRIC_GROUPS: dict = _load_rubric_groups()
+RUBRIC_META:   dict = _load_rubric_meta()
 
-# Índice invertido: texto normalizado → chave do grupo
+# ─── Índice invertido: texto normalizado → chave do grupo ───────────────────
 _RUBRIC_INDEX: dict = {}
+
+def _norm_rubric_key(t: str) -> str:
+    """Normalização interna usada para construir o índice de rubricas."""
+    t = t.upper().strip()
+    t = "".join(c for c in unicodedata.normalize("NFD", t) if unicodedata.category(c) != "Mn")
+    t = re.sub(r"[^\w\s]", "", t)
+    return " ".join(t.split())
+
 def _build_rubric_index():
-    def _n(t):
-        t = t.upper().strip()
-        t = "".join(c for c in unicodedata.normalize("NFD", t) if unicodedata.category(c) != "Mn")
-        t = re.sub(r"[^\w\s]", "", t)
-        return " ".join(t.split())
+    _RUBRIC_INDEX.clear()
     for group, variants in RUBRIC_GROUPS.items():
         for v in variants:
-            _RUBRIC_INDEX[_n(v)] = group
+            _RUBRIC_INDEX[_norm_rubric_key(v)] = group
+
 _build_rubric_index()
+
+def reload_rubric_config():
+    """Recarrega rubricas do JSON sem reiniciar o app (útil após edição manual)."""
+    global RUBRIC_GROUPS, RUBRIC_META
+    RUBRIC_GROUPS = _load_rubric_groups()
+    RUBRIC_META   = _load_rubric_meta()
+    _build_rubric_index()
+
+# ─── STATUS padronizados ─────────────────────────────────────────────────────
+STATUS = {
+    "OK":                    "OK",
+    "A_PAGAR":               "DIFERENÇA A PAGAR",
+    "PAGO_MAIOR":            "PAGO A MAIOR",
+    "DESCONTO_INDEVIDO":     "DESCONTO INDEVIDO",
+    "NAO_LOCALIZADO_RECIBO": "NÃO LOCALIZADO NO RECIBO",
+    "NAO_LOCALIZADO_REL":    "NÃO LOCALIZADO NO RELATÓRIO",
+    "POSSIVEL_RUBRICA":      "POSSÍVEL RUBRICA EQUIVALENTE",
+    "POSSIVEL_COLABORADOR":  "POSSÍVEL COLABORADOR EQUIVALENTE",
+    "REVISAO_MANUAL":        "NECESSITA REVISÃO MANUAL",
+    "ARREDONDAMENTO":        "DIFERENÇA DE ARREDONDAMENTO",
+}
 
 def normalize_rubric(text: str) -> str:
     """
@@ -113,6 +158,94 @@ def normalize_rubric(text: str) -> str:
     # Colapsa espaços
     t = " ".join(t.split())
     return _RUBRIC_INDEX.get(t, t)
+
+
+# ─────────────────────────────────────────────
+# SMART MATCHING DE RUBRICAS POR VALOR
+# ─────────────────────────────────────────────
+
+_STOP_WORDS = {"DE", "DA", "DO", "DOS", "DAS", "E", "A", "O", "S", "EM",
+               "NO", "NA", "NOS", "NAS", "SOBRE", "COM", "POR", "PARA"}
+
+def _palavras_sig(rubrica: str) -> set:
+    """Retorna palavras significativas de uma rubrica já normalizada."""
+    return {w for w in rubrica.split() if len(w) > 2 and w not in _STOP_WORDS}
+
+def rubric_words_overlap(a: str, b: str) -> float:
+    """
+    Score de sobreposição de palavras significativas entre duas rubricas (0.0–1.0).
+    Usa as formas normalizadas (sem acento, sem código). 0.5+ indica provável equivalência.
+
+    Exemplos:
+      "PREMIO" / "PREMIO PPR"     → 1.0  (PREMIO ∈ ambas)
+      "BONUS"  / "BONUS DESEMPENHO" → 1.0
+      "DSR"    / "COMISSAO"       → 0.0  (sem palavras em comum)
+    """
+    na = normalize_rubric(a)
+    nb = normalize_rubric(b)
+    # Se ambas já resolvem para o mesmo grupo canônico, overlap = 1.0
+    if na == nb:
+        return 1.0
+    wa = _palavras_sig(na)
+    wb = _palavras_sig(nb)
+    if not wa or not wb:
+        return 0.0
+    comuns = wa & wb
+    if not comuns:
+        return 0.0
+    # Jaccard ponderado: favorece quando uma é subconjunto da outra
+    return len(comuns) / max(len(wa), len(wb))
+
+def find_rubric_by_value(
+    descricao_esperada: str,
+    valor_esperado: float,
+    verbas: list,
+    tolerance: float = None,
+):
+    """
+    Busca uma verba no recibo por valor quando o grupo não foi reconhecido pelo nome.
+
+    Retorna o melhor candidato com campos:
+      verba        — dict da verba encontrada
+      diff         — diferença de valor
+      word_overlap — score de sobreposição de palavras (0–1)
+      confianca    — "alta" | "media" | "baixa"
+
+    Regra de confiança:
+      alta  → diff ≤ TOLERANCIA_CENTAVOS  E  overlap > 0.3  (mesmo valor + palavras em comum)
+      media → diff ≤ tolerance            E  overlap > 0     (mesmo valor, alguma palavra em comum)
+      baixa → diff ≤ tolerance            (mesmo valor, sem sobreposição de palavras)
+
+    Exemplo: esperado "PREMIO" R$ 500,00 → encontrado "PREMIO PPR" R$ 500,00 → alta confiança.
+    """
+    if tolerance is None:
+        tolerance = TOLERANCIA_DIVERGENCIA
+
+    candidatos = []
+    for v in verbas:
+        diff = abs(v["valor"] - valor_esperado)
+        if diff > tolerance:
+            continue
+        overlap = rubric_words_overlap(descricao_esperada, v["descricao"])
+        if diff <= TOLERANCIA_CENTAVOS and overlap > 0.3:
+            confianca = "alta"
+        elif diff <= tolerance and overlap > 0:
+            confianca = "media"
+        else:
+            confianca = "baixa"
+        candidatos.append({
+            "verba":        v,
+            "diff":         diff,
+            "word_overlap": overlap,
+            "confianca":    confianca,
+        })
+
+    if not candidatos:
+        return None
+    # Prioriza: maior overlap → menor diff
+    candidatos.sort(key=lambda x: (-x["word_overlap"], x["diff"]))
+    return candidatos[0]
+
 
 # ─────────────────────────────────────────────
 # PARSER EXCEL
@@ -630,16 +763,52 @@ def compare(excel: dict, pdf: dict, word: dict) -> dict:
                     return
                 v = _find_verba(keywords, codigo)
                 if not v:
-                    emp["divs"].append({
-                        "g": "alta",
-                        "tipo": f"{label} ausente no recibo",
-                        "desc": f"Planilha indica {label} de {fmt_brl(val)}, mas não encontrado no recibo.",
-                    })
+                    # ── Smart matching: busca por valor quando nome não reconhecido ──
+                    match = find_rubric_by_value(label, val, verbas)
+                    if match and match["confianca"] in ("alta", "media"):
+                        vb = match["verba"]
+                        diff = round(abs(vb["valor"] - val), 2)
+                        emp.setdefault("sugestoes_equivalencia", []).append({
+                            "esperado":   label,
+                            "encontrado": vb["descricao"],
+                            "valor":      val,
+                            "confianca":  match["confianca"],
+                            "dica":       f"Adicione '{vb['descricao']}' ao grupo correspondente em rubricas-equivalentes.json",
+                        })
+                        if diff <= TOLERANCIA_CENTAVOS:
+                            emp["divs"].append({
+                                "g":    "manual",
+                                "tipo": STATUS["POSSIVEL_RUBRICA"],
+                                "desc": (
+                                    f"'{label}' não encontrado pelo nome, mas "
+                                    f"'{vb['descricao']}' tem o mesmo valor {fmt_brl(val)}. "
+                                    f"Verifique se são equivalentes e adicione ao config."
+                                ),
+                            })
+                        else:
+                            emp["divs"].append({
+                                "g":    "media",
+                                "tipo": STATUS["POSSIVEL_RUBRICA"],
+                                "desc": (
+                                    f"'{label}' não encontrado pelo nome. Possível equivalente: "
+                                    f"'{vb['descricao']}' ({fmt_brl(vb['valor'])} vs esperado {fmt_brl(val)}). "
+                                    f"Diferença: {fmt_brl(diff)}."
+                                ),
+                            })
+                    else:
+                        emp["divs"].append({
+                            "g":    "alta",
+                            "tipo": STATUS["NAO_LOCALIZADO_RECIBO"],
+                            "desc": f"Planilha indica {label} de {fmt_brl(val)}, mas não encontrado no recibo.",
+                        })
+                elif abs(v.get("valor", 0) - val) <= TOLERANCIA_CENTAVOS:
+                    pass  # arredondamento — não reporta
                 elif abs(v.get("valor", 0) - val) > TOLERANCIA_DIVERGENCIA:
+                    diff_v = v.get("valor", 0)
                     emp["divs"].append({
-                        "g": "media",
-                        "tipo": f"{label} divergente",
-                        "desc": f"Planilha: {fmt_brl(val)} | Recibo: {fmt_brl(v.get('valor',0))}",
+                        "g":    "media",
+                        "tipo": STATUS["A_PAGAR"] if diff_v < val else STATUS["PAGO_MAIOR"],
+                        "desc": f"Planilha: {fmt_brl(val)} | Recibo: {fmt_brl(diff_v)} | Diferença: {fmt_brl(abs(diff_v - val))}",
                     })
 
             _check_bonus("pontualidade", "Pontualidade", ["PONTUALIDADE"], "221")
@@ -769,13 +938,15 @@ def compare(excel: dict, pdf: dict, word: dict) -> dict:
                     "diferenca": diff,
                 }
                 if diff <= TOLERANCIA_CENTAVOS:
-                    emp["memoria_comissao_dsr"] = {**mem, "status": "OK"}
+                    emp["memoria_comissao_dsr"] = {**mem, "status": STATUS["OK"]}
+                elif diff <= TOLERANCIA_DIVERGENCIA:
+                    emp["memoria_comissao_dsr"] = {**mem, "status": STATUS["ARREDONDAMENTO"]}
                 elif val_word > val_recibo:
                     emp["divs"].append({
                         "g": "alta",
-                        "tipo": "DIFERENÇA A PAGAR",
+                        "tipo": STATUS["A_PAGAR"],
                         "desc": (
-                            f"Comissão+DSR — Word: {fmt_brl(val_word)} | "
+                            f"Comissão+DSR — Relatório: {fmt_brl(val_word)} | "
                             f"Recibo: {fmt_brl(val_recibo)} | Falta: {fmt_brl(diff)}"
                         ),
                         "memoria": mem,
@@ -783,9 +954,9 @@ def compare(excel: dict, pdf: dict, word: dict) -> dict:
                 else:
                     emp["divs"].append({
                         "g": "media",
-                        "tipo": "PAGO A MAIOR",
+                        "tipo": STATUS["PAGO_MAIOR"],
                         "desc": (
-                            f"Comissão+DSR — Word: {fmt_brl(val_word)} | "
+                            f"Comissão+DSR — Relatório: {fmt_brl(val_word)} | "
                             f"Recibo: {fmt_brl(val_recibo)} | Excesso: {fmt_brl(diff)}"
                         ),
                         "memoria": mem,
@@ -1426,7 +1597,34 @@ def analisar():
 
     report = compare(excel_data, pdf_data, word_data)
     report["erros"] = errors
+
+    # Coleta todas as sugestões de equivalência para exibir no relatório
+    sugestoes = []
+    for emp in report.get("funcionarios", []):
+        for s in emp.get("sugestoes_equivalencia", []):
+            s["colaborador"] = emp.get("nome_exibir", emp.get("nome", ""))
+            sugestoes.append(s)
+    report["sugestoes_equivalencia"] = sugestoes
+
     return jsonify(report)
+
+
+@app.route("/recarregar-rubricas", methods=["POST"])
+def recarregar_rubricas():
+    """
+    Recarrega o arquivo rubricas-equivalentes.json sem reiniciar o servidor.
+    Chamar após editar o arquivo manualmente.
+    """
+    try:
+        reload_rubric_config()
+        return jsonify({
+            "ok": True,
+            "grupos": list(RUBRIC_GROUPS.keys()),
+            "total_variantes": sum(len(v) for v in RUBRIC_GROUPS.values()),
+        })
+    except Exception as e:
+        return jsonify({"ok": False, "erro": str(e)})
+
 
 # ─────────────────────────────────────────────
 # HTML TEMPLATE
@@ -2001,6 +2199,45 @@ function render(data){
 
   html+=`</div>`;
 
+  // Sugestões de equivalência de rubricas
+  const sug=data.sugestoes_equivalencia||[];
+  if(sug.length){
+    html+=`<div class="card" style="border-left:4px solid #3b82f6">
+      <div class="sec-title" style="color:#1d4ed8">💡 Sugestões de equivalência de rubricas</div>
+      <p style="font-size:.8rem;color:#374151;margin-bottom:.9rem">
+        O sistema encontrou rubricas com valores iguais mas nomes diferentes. Revise e, se confirmar, adicione ao arquivo
+        <strong>rubricas-equivalentes.json</strong> para que o sistema reconheça automaticamente nas próximas análises.
+      </p>
+      <table style="width:100%;border-collapse:collapse;font-size:.8rem">
+        <thead><tr style="background:#eff6ff">
+          <th style="text-align:left;padding:.4rem .6rem;color:#1e40af">Colaborador</th>
+          <th style="text-align:left;padding:.4rem .6rem;color:#1e40af">Esperado (relatório)</th>
+          <th style="text-align:left;padding:.4rem .6rem;color:#1e40af">Encontrado (recibo)</th>
+          <th style="text-align:right;padding:.4rem .6rem;color:#1e40af">Valor</th>
+          <th style="text-align:center;padding:.4rem .6rem;color:#1e40af">Confiança</th>
+        </tr></thead>
+        <tbody>
+          ${sug.map(s=>{
+            const conf={alta:'🟢 Alta',media:'🟡 Média',baixa:'🟠 Baixa'}[s.confianca]||s.confianca;
+            return `<tr style="border-bottom:1px solid #f0f0f0">
+              <td style="padding:.35rem .6rem">${s.colaborador}</td>
+              <td style="padding:.35rem .6rem;font-weight:600">${s.esperado}</td>
+              <td style="padding:.35rem .6rem;color:#059669">${s.encontrado}</td>
+              <td style="padding:.35rem .6rem;text-align:right">${brl(s.valor)}</td>
+              <td style="padding:.35rem .6rem;text-align:center">${conf}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      <div style="margin-top:.8rem;font-size:.73rem;color:#6b7280;background:#f8faff;border-radius:8px;padding:.6rem .8rem">
+        <strong>Como aplicar:</strong> Abra o arquivo <code>rubricas-equivalentes.json</code>, encontre o grupo correto
+        e adicione o nome da rubrica do recibo na lista de <code>variantes</code>. Depois clique em
+        <button onclick="recarregarRubricas()" style="background:#3b82f6;color:#fff;border:none;border-radius:5px;padding:.2rem .6rem;font-size:.72rem;cursor:pointer;font-weight:600">Recarregar config</button>
+        para aplicar sem reiniciar.
+      </div>
+    </div>`;
+  }
+
   // Erros de processamento
   if(data.erros?.length){
     html+=`<div class="err-box"><h4>Avisos de processamento</h4>${data.erros.map(e=>`<p>${e}</p>`).join('')}</div>`;
@@ -2012,6 +2249,20 @@ function render(data){
   </div>`;
 
   show(html);
+}
+
+async function recarregarRubricas(){
+  try{
+    const res=await fetch('/recarregar-rubricas',{method:'POST'});
+    const data=await res.json();
+    if(data.ok){
+      alert(`Config recarregada! ${data.grupos.length} grupos, ${data.total_variantes} variantes carregadas.`);
+    } else {
+      alert('Erro ao recarregar: '+data.erro);
+    }
+  } catch(e){
+    alert('Erro: '+e.message);
+  }
 }
 
 async function analyzeBeneficio(){
