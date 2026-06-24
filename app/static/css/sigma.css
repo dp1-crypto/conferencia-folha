@@ -180,6 +180,14 @@ details summary{font-size:.72rem;color:#6b7280;cursor:pointer;margin-top:.5rem;u
 .btn-export{background:#fff;border:1px solid #d1d5db;padding:.45rem 1rem;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;color:#374151;transition:all .15s}
 .btn-export:hover{border-color:#A72C31;color:#A72C31;background:#fff5f6}
 
+/* ── Badges de status INSS/IRRF ── */
+.imp-badge{display:inline-flex;align-items:center;padding:.18rem .55rem;border-radius:20px;font-size:.68rem;font-weight:700;white-space:nowrap}
+.imp-ok     {background:#dcfce7;color:#166534}
+.imp-div    {background:#fee2e2;color:#991b1b}
+.imp-ausente{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.imp-arr    {background:#fef9c3;color:#92400e}
+.imp-nd     {background:#f3f4f6;color:#9ca3af}
+
 /* ── Config section ── */
 .config-card{background:#f8faff;border:1px solid #dbeafe;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
 .config-card h3{font-size:.9rem;font-weight:600;color:#1e40af;margin-bottom:.5rem}
