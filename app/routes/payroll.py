@@ -4,6 +4,7 @@ from app.core.utils import fmt_brl
 from app.services.payroll_parser import parse_excel, parse_pdf, parse_word
 from app.services.payroll_comparator import compare
 from app.services.rubrics import reload_rubric_config, RUBRIC_GROUPS
+from app.services.tax_audit import auditar_folha
 
 payroll_bp = Blueprint('payroll', __name__)
 
@@ -46,6 +47,13 @@ def analisar():
             s["colaborador"] = emp.get("nome_exibir", emp.get("nome", ""))
             sugestoes.append(s)
     report["sugestoes_equivalencia"] = sugestoes
+
+    # Auditoria de INSS/IRRF automática quando há recibos PDF
+    if pdf_data:
+        try:
+            report["auditoria_impostos"] = auditar_folha(pdf_data)
+        except Exception as e:
+            report["auditoria_impostos"] = {"erro": str(e)}
 
     return jsonify(report)
 

@@ -31,6 +31,13 @@ def conferir_mes_anterior():
 
     result = compare_months(folha_atual, folha_anterior)
     result['erros'] = errors
+
+    # Auditoria de INSS/IRRF automática na folha atual
+    try:
+        result['auditoria_impostos'] = auditar_folha(folha_atual)
+    except Exception as e:
+        result['auditoria_impostos'] = {'erro': str(e)}
+
     return jsonify(result)
 
 

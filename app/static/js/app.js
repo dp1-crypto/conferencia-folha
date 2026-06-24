@@ -251,6 +251,11 @@ function render(data){
     html+='</div>';
   }
 
+  // Auditoria INSS/IRRF inline (quando PDF foi enviado)
+  if(data.auditoria_impostos && !data.auditoria_impostos.erro){
+    html += renderAuditoriaImpostosInline(data.auditoria_impostos);
+  }
+
   // Botoes exportar + imprimir
   html+='<div class="export-bar">'
     +'<button class="btn-export" onclick="exportar(\'folha\',\'excel\')">Exportar Excel</button>'
@@ -417,6 +422,11 @@ function renderMesAnterior(data){
       +'</div>';
   }
 
+  // Auditoria INSS/IRRF inline da folha atual
+  if(data.auditoria_impostos && !data.auditoria_impostos.erro){
+    html += renderAuditoriaImpostosInline(data.auditoria_impostos);
+  }
+
   if(data.erros&&data.erros.length){
     html+='<div class="err-box"><h4>Avisos</h4>';
     data.erros.forEach(function(e){html+='<p>'+e+'</p>'});
@@ -457,6 +467,89 @@ async function analisarImpostos(){
     btn.disabled=false;
     document.getElementById('loading-impostos').style.display='none';
   }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   AUDITORIA INSS/IRRF INLINE — reutilizável em qualquer aba
+   ───────────────────────────────────────────────────────────── */
+function renderAuditoriaImpostosInline(audit){
+  if(!audit||!audit.colaboradores) return '';
+
+  var r = audit.resumo || {};
+  var divs = r.com_divergencia || 0;
+  var total = r.total || 0;
+  var criticos = r.total_criticos || 0;
+
+  // Cor do cabeçalho do details
+  var cor = divs===0 ? '#166534' : (criticos>0 ? '#991b1b' : '#92400e');
+  var icone = divs===0 ? '✔' : '⚠';
+  var resumoTxt = divs===0
+    ? total + ' colaboradores — todos OK'
+    : divs + ' divergência(s) em ' + total + ' colaboradores' + (criticos?' · '+criticos+' crítica(s)':'');
+
+  function statusBadge(st){
+    if(st==='OK')         return '<span class="imp-badge imp-ok">OK</span>';
+    if(st==='AUSENTE')    return '<span class="imp-badge imp-ausente">AUSENTE</span>';
+    if(st==='DIVERGENTE') return '<span class="imp-badge imp-div">DIVERGENTE</span>';
+    if(st==='ARREDONDAMENTO') return '<span class="imp-badge imp-arr">ARRED.</span>';
+    return '<span class="imp-badge imp-nd">—</span>';
+  }
+
+  function deltaImp(calc, enc, status){
+    if(status==='SEM_DADOS'||status==='OK'||status==='ARREDONDAMENTO')
+      return '<span style="color:#9ca3af">—</span>';
+    var diff = Math.abs(calc - enc);
+    var cls  = calc > enc ? 'pct-up' : 'pct-down';
+    var lbl  = calc > enc ? '▲' : '▼';
+    return '<span class="'+cls+'" style="font-weight:700">'+lbl+' '+brl(diff)+'</span>';
+  }
+
+  var rows = '';
+  audit.colaboradores.forEach(function(c){
+    var temDiv = c.divergencias && c.divergencias.length > 0;
+    var rowCls = temDiv
+      ? (c.divergencias.some(function(d){return d.criticidade==='alta'}) ? 'comp-row-alta' : 'comp-row-media')
+      : 'comp-row-ok';
+    rows += '<tr class="'+rowCls+'">'
+      +'<td style="font-weight:600;font-size:.8rem">'+c.nome+'</td>'
+      +'<td style="text-align:right">'+brl(c.salario_bruto)+'</td>'
+      +'<td style="text-align:right;border-left:2px solid #e5e7eb">'+brl(c.inss_calculado)+'</td>'
+      +'<td style="text-align:right">'+brl(c.inss_encontrado)+'</td>'
+      +'<td style="text-align:right">'+deltaImp(c.inss_calculado,c.inss_encontrado,c.inss_status)+'</td>'
+      +'<td style="text-align:center">'+statusBadge(c.inss_status)+'</td>'
+      +'<td style="text-align:right;border-left:2px solid #e5e7eb">'+brl(c.irrf_calculado)+'</td>'
+      +'<td style="text-align:right">'+brl(c.irrf_encontrado)+'</td>'
+      +'<td style="text-align:right">'+deltaImp(c.irrf_calculado,c.irrf_encontrado,c.irrf_status)+'</td>'
+      +'<td style="text-align:center">'+statusBadge(c.irrf_status)+'</td>'
+      +'</tr>';
+  });
+
+  return '<div class="card" style="margin-top:1.25rem">'
+    +'<details'+(divs>0?' open':'')+'>'
+    +'<summary style="cursor:pointer;font-size:.9rem;font-weight:700;color:'+cor+';padding:.2rem 0;list-style:none;display:flex;align-items:center;gap:.5rem">'
+    +'<span style="font-size:1rem">'+icone+'</span>'
+    +'<span>Auditoria INSS / IRRF</span>'
+    +'<span style="font-size:.78rem;font-weight:400;color:#6b7280;margin-left:.4rem">— '+resumoTxt+'</span>'
+    +'</summary>'
+    +'<div style="overflow-x:auto;margin-top:.9rem">'
+    +'<table class="tbl-comp"><thead>'
+    +'<tr>'
+    +'<th rowspan="2" style="min-width:140px">Colaborador</th>'
+    +'<th rowspan="2" style="text-align:right;width:90px">Sal. Bruto</th>'
+    +'<th colspan="4" style="text-align:center;border-left:2px solid #e5e7eb;background:#fef9f9">INSS</th>'
+    +'<th colspan="4" style="text-align:center;border-left:2px solid #e5e7eb;background:#f9f9ff">IRRF</th>'
+    +'</tr><tr>'
+    +'<th style="text-align:right;border-left:2px solid #e5e7eb;font-weight:500;color:#6b7280;background:#fef9f9">Calc.</th>'
+    +'<th style="text-align:right;font-weight:500;color:#6b7280;background:#fef9f9">Enc.</th>'
+    +'<th style="text-align:right;font-weight:600;background:#fef9f9">Δ</th>'
+    +'<th style="text-align:center;background:#fef9f9">Status</th>'
+    +'<th style="text-align:right;border-left:2px solid #e5e7eb;font-weight:500;color:#6b7280;background:#f9f9ff">Calc.</th>'
+    +'<th style="text-align:right;font-weight:500;color:#6b7280;background:#f9f9ff">Enc.</th>'
+    +'<th style="text-align:right;font-weight:600;background:#f9f9ff">Δ</th>'
+    +'<th style="text-align:center;background:#f9f9ff">Status</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'<p style="font-size:.7rem;color:#9ca3af;margin-top:.5rem">Tabela progressiva INSS 2024 · IRRF: tolerância R$ 10,00</p>'
+    +'</details></div>';
 }
 
 function renderImpostos(data){
