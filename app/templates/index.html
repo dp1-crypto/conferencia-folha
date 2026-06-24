@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Conferencia de Folha — Sigma Contabilidade</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/sigma.css">
+</head>
+<body>
+
+<header>
+  <div style="display:flex;align-items:center;gap:1rem">
+    <img src="https://gsigma.com.br/wp-content/uploads/2025/08/LOGO-SIGMA-ICONE.webp" alt="Sigma" style="height:40px;width:auto;filter:brightness(0) invert(1)">
+    <div>
+      <div class="logo" style="font-family:'Montserrat',sans-serif;font-size:1.3rem;font-weight:800;letter-spacing:-.5px;color:#fff">SIGMA <span style="color:#fff;font-weight:400;opacity:.85">Contabilidade</span></div>
+      <div class="subtitle" style="font-size:.72rem;color:rgba(255,255,255,.65);letter-spacing:.3px">Alem da Contabilidade</div>
+    </div>
+  </div>
+  <div style="text-align:center">
+    <div style="font-size:.95rem;font-weight:600;color:rgba(255,255,255,.9);letter-spacing:.2px">Conferencia de Folha de Pagamento</div>
+  </div>
+  <div style="font-size:.72rem;color:rgba(255,255,255,.5);text-align:right;line-height:1.5">
+    Arquivos processados<br>localmente - sem armazenamento
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- TABS -->
+  <div class="tabs no-print">
+    <button class="tab active" onclick="switchTab('folha')">Folha x Lancamentos</button>
+    <button class="tab" onclick="switchTab('anterior')">Mes Anterior</button>
+    <button class="tab" onclick="switchTab('impostos')">INSS / IRRF</button>
+    <button class="tab" onclick="switchTab('beneficio')">Beneficios</button>
+    <button class="tab" onclick="switchTab('auditoria')">Auditoria</button>
+    <button class="tab" onclick="switchTab('config')">Configuracoes</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       ABA 1: CONFERENCIA DE FOLHA
+       ═══════════════════════════════════════════ -->
+  <div class="section active" id="section-folha">
+
+    <div class="card">
+      <h2>Envie os arquivos da folha</h2>
+      <p>Selecione ou arraste os arquivos abaixo. O sistema compara a planilha, os recibos e o documento de instrucoes e aponta todas as divergencias.</p>
+
+      <div class="file-grid">
+        <div class="zone" id="zone-excel" ondragover="drag(event,'excel')" ondragleave="undrag(event,'excel')" ondrop="drop(event,'excel')">
+          <input type="file" id="file-excel" accept=".xls,.xlsx" multiple onchange="sel('excel',this)">
+          <div class="icon">&#x1F4CA;</div>
+          <div class="lbl">Planilha Excel</div>
+          <div class="hint">.xls ou .xlsx -- pode selecionar varios</div>
+          <div class="fname" id="fname-excel"></div>
+        </div>
+
+        <div class="zone" id="zone-pdf" ondragover="drag(event,'pdf')" ondragleave="undrag(event,'pdf')" ondrop="drop(event,'pdf')">
+          <input type="file" id="file-pdf" accept=".pdf" multiple onchange="sel('pdf',this)">
+          <div class="icon">&#x1F4C4;</div>
+          <div class="lbl">Recibos PDF</div>
+          <div class="hint">.pdf -- pode selecionar varios</div>
+          <div class="fname" id="fname-pdf"></div>
+        </div>
+
+        <div class="zone" id="zone-word" ondragover="drag(event,'word')" ondragleave="undrag(event,'word')" ondrop="drop(event,'word')">
+          <input type="file" id="file-word" accept=".docx,.doc" multiple onchange="sel('word',this)">
+          <div class="icon">&#x1F4DD;</div>
+          <div class="lbl">Documento Word <span class="opt-badge">(opcional)</span></div>
+          <div class="hint">.docx -- pode selecionar varios</div>
+          <div class="fname" id="fname-word"></div>
+        </div>
+      </div>
+
+      <button class="btn" id="btn" onclick="analyze()">Analisar Folha</button>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p style="color:#6b7280;font-size:.88rem">Processando e comparando dados...</p>
+    </div>
+
+    <div class="results" id="results"></div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       ABA 2: MES ANTERIOR
+       ═══════════════════════════════════════════ -->
+  <div id="section-anterior" class="section">
+    <div class="card">
+      <h2>Conferencia Folha Atual x Mes Anterior</h2>
+      <p>Detecta colaboradores novos, desligados e alteracoes salariais significativas.</p>
+      <div class="file-grid">
+        <div class="zone" id="zone-atual" ondragover="drag(event,'atual')" ondragleave="undrag(event,'atual')" ondrop="drop(event,'atual')">
+          <input type="file" id="inp-atual" accept=".pdf" multiple onchange="sel('atual',this)">
+          <div class="icon">&#x1F4C4;</div>
+          <div class="lbl">Folha Atual (PDF)</div>
+          <div class="hint">Recibos do mes atual</div>
+          <div class="fname" id="fname-atual"></div>
+        </div>
+        <div class="zone" id="zone-anterior" ondragover="drag(event,'anterior')" ondragleave="undrag(event,'anterior')" ondrop="drop(event,'anterior')">
+          <input type="file" id="inp-anterior" accept=".pdf" multiple onchange="sel('anterior',this)">
+          <div class="icon">&#x1F4C5;</div>
+          <div class="lbl">Mes Anterior (PDF)</div>
+          <div class="hint">Recibos do mes anterior</div>
+          <div class="fname" id="fname-anterior"></div>
+        </div>
+      </div>
+      <button class="btn" id="btn-anterior" onclick="analisarMesAnterior()">Comparar Folhas</button>
+    </div>
+    <div id="loading-anterior" class="loading"><div class="spinner"></div><p style="color:#6b7280;font-size:.88rem">Comparando folhas...</p></div>
+    <div id="results-anterior"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       ABA 3: INSS / IRRF
+       ═══════════════════════════════════════════ -->
+  <div id="section-impostos" class="section">
+    <div class="card">
+      <h2>Auditoria de INSS e IRRF</h2>
+      <p>Confere calculos de INSS (tabela progressiva 2024) e IRRF na folha.</p>
+      <div class="file-grid">
+        <div class="zone" id="zone-pdf-impostos" ondragover="drag(event,'pdf-impostos')" ondragleave="undrag(event,'pdf-impostos')" ondrop="drop(event,'pdf-impostos')">
+          <input type="file" id="inp-pdf-impostos" accept=".pdf" multiple onchange="sel('pdf-impostos',this)">
+          <div class="icon">&#x1F9FE;</div>
+          <div class="lbl">Recibos PDF</div>
+          <div class="hint">Holerites para auditoria</div>
+          <div class="fname" id="fname-pdf-impostos"></div>
+        </div>
+      </div>
+      <button class="btn" id="btn-impostos" onclick="analisarImpostos()">Auditar Impostos</button>
+    </div>
+    <div id="loading-impostos" class="loading"><div class="spinner"></div><p style="color:#6b7280;font-size:.88rem">Auditando impostos...</p></div>
+    <div id="results-impostos"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       ABA 4: BENEFICIOS
+       ═══════════════════════════════════════════ -->
+  <div class="section" id="section-beneficio">
+
+    <div class="card no-print">
+      <h2>Conferencia de Beneficio</h2>
+      <p>Compare o valor esperado de um beneficio com o que foi descontado na folha de pagamento. Funciona com qualquer tipo de desconto: plano de saude, vale alimentacao, emprestimo, etc.</p>
+
+      <div class="file-grid">
+        <div class="zone" id="zone-fatura" ondragover="drag(event,'fatura')" ondragleave="undrag(event,'fatura')" ondrop="drop(event,'fatura')" style="position:relative">
+          <input type="file" id="file-fatura" accept=".pdf,.xls,.xlsx" multiple onchange="sel('fatura',this)">
+          <div class="icon">&#x1F4C1;</div>
+          <div class="lbl">Documento(s) de referencia <span class="opt-badge">(opcional)</span></div>
+          <div class="hint">.pdf -- fatura, relatorio, lista de valores -- pode selecionar varios</div>
+          <div class="fname" id="fname-fatura"></div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;justify-content:center;gap:.5rem;padding:.5rem 0">
+          <label style="font-size:.75rem;font-weight:600;color:#374151">Palavra-chave do documento PDF</label>
+          <input type="text" id="filtro-linha" value="MENSALIDADE" placeholder="Ex: MENSALIDADE"
+            style="font-size:.82rem;padding:.42rem .6rem;border:1px solid #d1d5db;border-radius:6px;width:100%;text-transform:uppercase">
+          <div style="font-size:.7rem;color:#9ca3af">Palavra que identifica linhas de valor no PDF (padrao: MENSALIDADE)</div>
+        </div>
+
+        <div class="zone" id="zone-extrato" ondragover="drag(event,'extrato')" ondragleave="undrag(event,'extrato')" ondrop="drop(event,'extrato')">
+          <input type="file" id="file-extrato" accept=".pdf" multiple onchange="sel('extrato',this)">
+          <div class="icon">&#x1F4CB;</div>
+          <div class="lbl">Extrato de Folha PDF</div>
+          <div class="hint">.pdf -- pode selecionar varios</div>
+          <div class="fname" id="fname-extrato"></div>
+        </div>
+      </div>
+
+      <!-- Evento a analisar -->
+      <div style="margin-bottom:1rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:1rem">
+        <div style="font-size:.82rem;font-weight:600;color:#166534;margin-bottom:.7rem">Evento a analisar no extrato</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;align-items:end">
+          <div>
+            <label style="font-size:.75rem;font-weight:600;color:#374151;display:block;margin-bottom:.3rem">Evento</label>
+            <select id="evento-select" onchange="toggleEventoCodigo()" style="width:100%;font-size:.82rem;padding:.42rem .6rem;border:1px solid #d1d5db;border-radius:6px;background:#fff">
+              <option value="8111">8111 -- Plano de Saude</option>
+              <option value="246">246 -- Plano Odontologico</option>
+              <option value="48">48 -- Vale Transporte</option>
+              <option value="203">203 -- Alimentacao</option>
+              <option value="998">998 -- INSS</option>
+              <option value="999">999 -- IRRF / Imposto de Renda</option>
+              <option value="custom">Outro (digitar codigo)</option>
+            </select>
+          </div>
+          <div id="evento-codigo-wrap" style="display:none">
+            <label style="font-size:.75rem;font-weight:600;color:#374151;display:block;margin-bottom:.3rem">Codigo do evento</label>
+            <input type="text" id="evento-codigo-input" placeholder="Ex: 1234" style="width:100%;font-size:.82rem;padding:.42rem .6rem;border:1px solid #d1d5db;border-radius:6px">
+          </div>
+          <div id="evento-info" style="font-size:.72rem;color:#166534;align-self:center">
+            O sistema ira buscar e somar todos os descontos deste codigo no extrato para cada funcionario.
+          </div>
+        </div>
+      </div>
+
+      <!-- Regra de desconto esperado -->
+      <div style="margin-bottom:1.2rem;background:#f8faff;border:1px solid #dbeafe;border-radius:10px;padding:1rem">
+        <div style="font-size:.82rem;font-weight:600;color:#1e40af;margin-bottom:.7rem">Regra de desconto esperado</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;align-items:end">
+          <div>
+            <label style="font-size:.75rem;font-weight:600;color:#374151;display:block;margin-bottom:.3rem">Tipo</label>
+            <select id="regra-tipo" onchange="toggleRegraValor()" style="width:100%;font-size:.82rem;padding:.42rem .6rem;border:1px solid #d1d5db;border-radius:6px;background:#fff">
+              <option value="fatura">Usar valor do documento de referencia</option>
+              <option value="pct_fatura">% do valor do documento de referencia</option>
+              <option value="pct_salario">% do salario do funcionario</option>
+              <option value="fixo">Valor fixo por funcionario</option>
+            </select>
+          </div>
+          <div id="regra-valor-wrap">
+            <label style="font-size:.75rem;font-weight:600;color:#374151;display:block;margin-bottom:.3rem" id="regra-valor-label">Percentual ou valor</label>
+            <input type="number" id="regra-valor" step="0.01" min="0" placeholder="Ex: 15 para 15%" style="width:100%;font-size:.82rem;padding:.42rem .6rem;border:1px solid #d1d5db;border-radius:6px">
+          </div>
+        </div>
+        <div id="regra-hint" style="font-size:.72rem;color:#6b7280;margin-top:.5rem"></div>
+      </div>
+
+      <button class="btn" id="btn-beneficio" onclick="analyzeBeneficio()">Analisar Beneficio</button>
+    </div>
+
+    <div class="loading" id="loading-beneficio">
+      <div class="spinner"></div>
+      <p style="color:#6b7280;font-size:.88rem">Processando faturas e extraindo descontos...</p>
+    </div>
+
+    <div id="results-beneficio"></div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       ABA 5: AUDITORIA CONSOLIDADA
+       ═══════════════════════════════════════════ -->
+  <div id="section-auditoria" class="section">
+    <div class="card">
+      <h2>Resumo Consolidado</h2>
+      <p>Visao geral de todas as analises realizadas nesta sessao.</p>
+    </div>
+    <div id="results-auditoria">
+      <div class="card"><p style="text-align:center;color:#9ca3af;padding:2rem">Nenhuma analise realizada ainda. Use as outras abas para processar arquivos e o resumo aparecera aqui.</p></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       ABA 6: CONFIGURACOES
+       ═══════════════════════════════════════════ -->
+  <div id="section-config" class="section">
+    <div class="card">
+      <h2>Configuracoes</h2>
+      <p>Gerencie as equivalencias de rubricas e parametros do sistema.</p>
+    </div>
+
+    <div class="config-card">
+      <h3>Rubricas Equivalentes</h3>
+      <p>O arquivo <code>rubricas-equivalentes.json</code> contem as equivalencias de nomes de rubricas entre documentos. Edite-o manualmente e recarregue sem reiniciar.</p>
+      <div style="margin-top:.8rem">
+        <button class="btn" style="width:auto;padding:.6rem 1.5rem" onclick="recarregarRubricas()">Recarregar Rubricas</button>
+      </div>
+    </div>
+
+    <div class="config-card">
+      <h3>Tolerancias</h3>
+      <p>Tolerancia de centavos (arredondamento): <strong>R$ 0,02</strong></p>
+      <p>Tolerancia de divergencia: <strong>R$ 0,05</strong></p>
+      <p style="font-size:.72rem;color:#9ca3af;margin-top:.5rem">Para alterar, edite o arquivo <code>app/core/config.py</code>.</p>
+    </div>
+
+    <div class="config-card">
+      <h3>Exportacao</h3>
+      <p>Os botoes de exportacao (Excel / CSV) ficam disponiveis apos cada analise. Voce tambem pode exportar via API POST <code>/exportar</code>.</p>
+    </div>
+  </div>
+
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+/* ── Sigma Contabilidade — Conferencia de Folha ── */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#f1f3f6;color:#333333;min-height:100vh}
+
+header{background:linear-gradient(135deg,#A72C31 0%,#8B2227 100%);color:#fff;padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.logo{font-size:1.35rem;font-weight:700;letter-spacing:-.5px}.logo span{color:#A72C31}
+.subtitle{font-size:.8rem;color:#8892b0;margin-top:2px}
+
+.container{max-width:1050px;margin:0 auto;padding:2rem 1rem}
+
+.card{background:#fff;border-radius:16px;padding:1.75rem;box-shadow:0 2px 16px rgba(0,0,0,.07);margin-bottom:1.25rem}
+
+h2{font-size:1.05rem;font-weight:600;color:#A72C31;margin-bottom:.35rem}
+.card > p{font-size:.83rem;color:#6b7280;margin-bottom:1.5rem}
+
+.file-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-bottom:1.5rem}
+
+.zone{border:2px dashed #d1d5db;border-radius:12px;padding:1.5rem 1rem;text-align:center;cursor:pointer;transition:all .2s;position:relative;min-height:130px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.zone:hover,.zone.over{border-color:#A72C31;background:#fff5f6}
+.zone.done{border-color:#10b981;border-style:solid;background:#f0fdf4}
+.zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.zone .icon{font-size:2rem;margin-bottom:.4rem}
+.zone .lbl{font-size:.88rem;font-weight:600;color:#374151}
+.zone .hint{font-size:.73rem;color:#9ca3af;margin-top:.2rem}
+.zone .fname{font-size:.75rem;color:#059669;font-weight:500;margin-top:.4rem;word-break:break-all;max-width:200px}
+.opt-badge{font-size:.65rem;color:#9ca3af;font-weight:400}
+
+.btn{background:linear-gradient(135deg,#A72C31 0%,#8B2227 100%);color:#fff;border:none;padding:.85rem 2rem;border-radius:10px;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s;width:100%;letter-spacing:.3px}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(233,69,96,.35)}
+.btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+.loading{display:none;text-align:center;padding:3rem}
+.spinner{width:40px;height:40px;border:3px solid #f3f4f6;border-top-color:#A72C31;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.results{display:none}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.25rem}
+.stat{background:#fff;border-radius:12px;padding:1.2rem 1rem;box-shadow:0 2px 10px rgba(0,0,0,.06);text-align:center}
+.stat .n{font-size:2.4rem;font-weight:700;line-height:1}
+.stat .l{font-size:.75rem;color:#6b7280;margin-top:.2rem;font-weight:500}
+.stat.t .n{color:#333333}
+.stat.g .n{color:#10b981}
+.stat.d .n{color:#A72C31}
+
+.sec-title{font-size:.95rem;font-weight:600;padding-bottom:.7rem;border-bottom:1px solid #f3f4f6;margin-bottom:1rem;display:flex;align-items:center;gap:.4rem}
+
+.emp{border:1px solid #f0f0f0;border-radius:10px;margin-bottom:.6rem;overflow:hidden;transition:box-shadow .15s}
+.emp:hover{box-shadow:0 2px 10px rgba(0,0,0,.07)}
+.emp-hdr{display:flex;align-items:center;justify-content:space-between;padding:.8rem 1.1rem;cursor:pointer;transition:background .1s;gap:.5rem}
+.emp-hdr:hover{background:#fafafa}
+.emp-name{font-weight:600;font-size:.88rem}
+.emp-sub{font-size:.75rem;color:#6b7280;margin-top:1px}
+.badge{display:inline-flex;align-items:center;gap:.3rem;padding:.22rem .7rem;border-radius:20px;font-size:.72rem;font-weight:600;white-space:nowrap}
+.badge.ok{background:#dcfce7;color:#166534}
+.badge.div{background:#fee2e2;color:#991b1b}
+
+.emp-body{display:none;padding:1rem 1.1rem;border-top:1px solid #f3f4f6;background:#fafafa}
+.emp.open .emp-body{display:block}
+
+.div-item{display:flex;gap:.7rem;padding:.55rem .8rem;border-radius:7px;margin-bottom:.45rem}
+.div-item.alta{background:#fff1f2;border-left:3px solid #A72C31}
+.div-item.media{background:#fffbeb;border-left:3px solid #f59e0b}
+.div-item.manual{background:#eff6ff;border-left:3px solid #3b82f6}
+.div-tipo{font-weight:600;font-size:.78rem;margin-bottom:.1rem}
+.div-desc{font-size:.78rem;color:#4b5563}
+
+.add-div-btn{margin-top:.7rem;background:none;border:1px dashed #d1d5db;border-radius:7px;padding:.4rem .8rem;font-size:.75rem;color:#6b7280;cursor:pointer;width:100%;text-align:left;transition:all .15s}
+.add-div-btn:hover{border-color:#3b82f6;color:#3b82f6;background:#eff6ff}
+
+.div-form{margin-top:.6rem;background:#f8faff;border:1px solid #dbeafe;border-radius:10px;padding:.9rem;display:none}
+.div-form.open{display:block}
+.div-form label{font-size:.75rem;font-weight:600;color:#374151;display:block;margin-bottom:.2rem;margin-top:.55rem}
+.div-form label:first-child{margin-top:0}
+.div-form input,.div-form textarea,.div-form select{width:100%;font-size:.8rem;padding:.42rem .6rem;border:1px solid #d1d5db;border-radius:6px;font-family:inherit;color:#111;background:#fff}
+.div-form textarea{resize:vertical;min-height:52px}
+.div-form .val-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;align-items:end}
+.div-form .diff-box{background:#e0edff;border-radius:6px;padding:.42rem .6rem;font-size:.8rem;font-weight:600;color:#1d4ed8;text-align:center}
+.div-form .btn-row{display:flex;gap:.5rem;margin-top:.7rem}
+.div-form .btn-salvar{background:#3b82f6;color:#fff;border:none;border-radius:7px;padding:.4rem 1rem;font-size:.78rem;font-weight:600;cursor:pointer}
+.div-form .btn-salvar:hover{background:#2563eb}
+.div-form .btn-cancel{background:none;border:1px solid #d1d5db;border-radius:7px;padding:.4rem .8rem;font-size:.78rem;color:#6b7280;cursor:pointer}
+.div-form .btn-cancel:hover{border-color:#9ca3af;color:#374151}
+.manual-tag{font-size:.65rem;background:#dbeafe;color:#1d4ed8;border-radius:4px;padding:.1rem .35rem;font-weight:600;margin-left:.3rem;vertical-align:middle}
+
+.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:.75rem}
+.dtbl h4{font-size:.78rem;font-weight:600;color:#374151;margin-bottom:.4rem}
+.dtbl table{width:100%;border-collapse:collapse;font-size:.76rem}
+.dtbl td{padding:.28rem .4rem;border-bottom:1px solid #f3f4f6}
+.dtbl td:last-child{text-align:right;font-weight:500}
+.dtbl tr:last-child td{font-weight:700;border-top:2px solid #e5e7eb;border-bottom:none}
+
+details summary{font-size:.72rem;color:#6b7280;cursor:pointer;margin-top:.5rem;user-select:none}
+
+.obs-box{background:#fffbeb;border-left:3px solid #f59e0b;border-radius:6px;padding:.5rem .8rem;font-size:.82rem;margin-bottom:.4rem}
+
+.err-box{background:#fff1f2;border:1px solid #fecaca;border-radius:8px;padding:.9rem;margin-top:1rem}
+.err-box h4{color:#b91c1c;font-size:.82rem;margin-bottom:.4rem}
+.err-box p{font-size:.78rem;color:#7f1d1d}
+
+.gratif-table{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:.5rem}
+.gratif-table th{text-align:left;padding:.3rem .5rem;color:#6b7280;font-weight:500;border-bottom:1px solid #f3f4f6}
+.gratif-table td{padding:.3rem .5rem;border-bottom:1px solid #f9fafb}
+
+@media(max-width:600px){
+  .stats{grid-template-columns:1fr}
+  .data-grid{grid-template-columns:1fr}
+  .file-grid{grid-template-columns:1fr}
+}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:.5rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.tab{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:.6rem 1.3rem;font-size:.85rem;font-weight:600;cursor:pointer;color:#6b7280;transition:all .2s}
+.tab.active{background:#A72C31;color:#fff;border-color:#A72C31}
+.section{display:none}
+.section.active{display:block}
+
+/* ── Tabela de Beneficio ── */
+.ben-table{width:100%;border-collapse:collapse;font-size:.82rem;table-layout:fixed}
+.ben-table th{text-align:left;padding:.45rem .6rem;color:#6b7280;font-weight:500;border-bottom:2px solid #f0f0f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ben-table td{padding:.45rem .6rem;border-bottom:1px solid #f9fafb;vertical-align:middle;overflow:hidden;text-overflow:ellipsis}
+.ben-table tr:hover td{background:#fafafa}
+.ben-table tr.maior td{background:#fff1f2}
+.ben-table tr.menor td{background:#fffbeb}
+.ben-table tr.sem-doc td{background:#f0f9ff}
+.ben-table .valor{text-align:right;font-weight:500;white-space:nowrap}
+.ben-table .diff-pos{color:#A72C31;font-weight:700}
+.ben-table .diff-neg{color:#f59e0b;font-weight:700}
+.ben-table .diff-ok{color:#10b981;font-weight:700}
+
+@page{margin:1cm 1.5cm;size:A4}
+@media print{
+  body > *:not(#print-overlay){display:none!important}
+  #print-overlay{display:block!important;position:static!important;padding:0!important;overflow:visible!important}
+}
+.print-header{display:none;text-align:center;margin-bottom:1.2rem;font-size:.9rem;color:#333333}
+.ben-badge{display:inline-flex;align-items:center;padding:.18rem .6rem;border-radius:20px;font-size:.7rem;font-weight:700;white-space:nowrap}
+.ben-badge.ok{background:#dcfce7;color:#166534}
+.ben-badge.maior{background:#fee2e2;color:#991b1b}
+.ben-badge.menor{background:#fef9c3;color:#92400e}
+.ben-badge.nd{background:#e0f2fe;color:#0369a1}
+
+/* ── Novos estilos — Mes Anterior / Impostos / Auditoria ── */
+.badge-alta{background:#fee2e2;color:#991b1b;border-left:3px solid #A72C31;padding:.22rem .7rem;border-radius:20px;font-size:.72rem;font-weight:600;display:inline-flex;align-items:center}
+.badge-media{background:#fffbeb;color:#92400e;border-left:3px solid #f59e0b;padding:.22rem .7rem;border-radius:20px;font-size:.72rem;font-weight:600;display:inline-flex;align-items:center}
+.badge-baixa{background:#f0fdf4;color:#166534;border-left:3px solid #10b981;padding:.22rem .7rem;border-radius:20px;font-size:.72rem;font-weight:600;display:inline-flex;align-items:center}
+.badge-novo{background:#dcfce7;color:#166534;padding:.22rem .7rem;border-radius:20px;font-size:.72rem;font-weight:600;display:inline-flex;align-items:center}
+.badge-desligado{background:#fee2e2;color:#991b1b;padding:.22rem .7rem;border-radius:20px;font-size:.72rem;font-weight:600;display:inline-flex;align-items:center}
+.pct-up{color:#A72C31}
+.pct-down{color:#10b981}
+.imposto-ok{background:#f0fdf4}
+.imposto-div{background:#fff1f2}
+
+/* ── Stats 4 colunas ── */
+.stats-4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.25rem}
+@media(max-width:600px){.stats-4{grid-template-columns:repeat(2,1fr)}}
+
+/* ── Tabela generica ── */
+.tbl-sigma{width:100%;border-collapse:collapse;font-size:.82rem}
+.tbl-sigma th{text-align:left;padding:.45rem .6rem;color:#6b7280;font-weight:500;border-bottom:2px solid #f0f0f0}
+.tbl-sigma td{padding:.45rem .6rem;border-bottom:1px solid #f9fafb}
+.tbl-sigma tr:hover td{background:#fafafa}
+
+/* ── Export buttons ── */
+.export-bar{display:flex;gap:.5rem;margin-top:1rem;justify-content:center}
+.btn-export{background:#fff;border:1px solid #d1d5db;padding:.45rem 1rem;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;color:#374151;transition:all .15s}
+.btn-export:hover{border-color:#A72C31;color:#A72C31;background:#fff5f6}
+
+/* ── Config section ── */
+.config-card{background:#f8faff;border:1px solid #dbeafe;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.config-card h3{font-size:.9rem;font-weight:600;color:#1e40af;margin-bottom:.5rem}
+.config-card p{font-size:.78rem;color:#4b5563}
