@@ -78,7 +78,7 @@ def auditar_colaborador(nome: str, verbas: list) -> dict:
 
     divergencias = []
 
-    def _check(campo, calculado, encontrado, label_calc, label_enc):
+    def _check_inss(calculado, encontrado):
         diff = round(abs(calculado - encontrado), 2)
         if calculado == 0 and encontrado == 0:
             return 'SEM_DADOS'
@@ -90,8 +90,18 @@ def auditar_colaborador(nome: str, verbas: list) -> dict:
             return 'ARREDONDAMENTO'
         return 'DIVERGENTE'
 
-    inss_status = _check('INSS', inss_calculado, inss_encontrado, 'Calculado', 'Encontrado')
-    irrf_status = _check('IRRF', irrf_calculado, irrf_encontrado, 'Calculado', 'Encontrado')
+    def _check_irrf(calculado, encontrado):
+        diff = round(abs(calculado - encontrado), 2)
+        if calculado == 0 and encontrado == 0:
+            return 'SEM_DADOS'
+        if encontrado == 0 and calculado > 0:
+            return 'AUSENTE'
+        if diff <= 10.00:   # IRRF: tolerância de R$ 10,00 (diferenças pequenas são normais)
+            return 'OK'
+        return 'DIVERGENTE'
+
+    inss_status = _check_inss(inss_calculado, inss_encontrado)
+    irrf_status = _check_irrf(irrf_calculado, irrf_encontrado)
 
     if inss_status in ('DIVERGENTE', 'AUSENTE'):
         divergencias.append({
