@@ -64,11 +64,36 @@ def _find_value_in_verbas(verbas: list, keywords: list) -> float:
     return 0.0
 
 
+def _find_verbas_by_kw(verbas: list, keywords: list) -> list:
+    """Retorna todas as verbas que batem com alguma keyword."""
+    return [
+        {'descricao': v.get('descricao', ''), 'valor': v.get('valor', 0), 'codigo': v.get('codigo', '')}
+        for v in verbas
+        if any(kw in v.get('descricao', '').upper() for kw in keywords)
+    ]
+
+
+def _classificar_verba(verbas: list) -> str:
+    """Classifica uma verba como provento ou desconto a partir das keywords."""
+    _KW_DESCONTO = ['INSS', 'IRRF', 'IRPF', 'IMP RENDA', 'FGTS', 'DESCONTO', 'VALE', 'PLANO',
+                    'EMPRESTIMO', 'ADIANT', 'FALTAS', 'FALTA']
+    for v in verbas:
+        desc = v.get('descricao', '').upper()
+        if any(kw in desc for kw in _KW_DESCONTO):
+            return 'desconto'
+    return 'provento'
+
+
 def auditar_colaborador(nome: str, verbas: list) -> dict:
     """Audita INSS e IRRF de um colaborador baseado nas verbas do recibo."""
     salario_bruto = _find_value_in_verbas(verbas, _KW_SALARIO)
     inss_encontrado = _find_value_in_verbas(verbas, _KW_INSS)
     irrf_encontrado = _find_value_in_verbas(verbas, _KW_IRRF)
+
+    # Verbas detalhadas por tipo (para exibição no frontend)
+    verbas_inss = _find_verbas_by_kw(verbas, _KW_INSS)
+    verbas_irrf = _find_verbas_by_kw(verbas, _KW_IRRF)
+    verbas_salario = _find_verbas_by_kw(verbas, _KW_SALARIO)
 
     # Tenta encontrar base de calculo pelo total de vencimentos
     # Considera o salario bruto como os vencimentos tributaveis
@@ -123,6 +148,25 @@ def auditar_colaborador(nome: str, verbas: list) -> dict:
             'status': irrf_status,
         })
 
+    # Todas as rubricas classificadas como provento/desconto para exibição completa
+    rubricas_detalhadas = []
+    for v in verbas:
+        desc_upper = v.get('descricao', '').upper()
+        if any(kw in desc_upper for kw in _KW_INSS):
+            tipo_rb = 'inss'
+        elif any(kw in desc_upper for kw in _KW_IRRF):
+            tipo_rb = 'irrf'
+        elif any(kw in desc_upper for kw in _KW_SALARIO):
+            tipo_rb = 'salario'
+        else:
+            tipo_rb = 'outro'
+        rubricas_detalhadas.append({
+            'codigo': v.get('codigo', ''),
+            'descricao': v.get('descricao', ''),
+            'valor': v.get('valor', 0),
+            'tipo': tipo_rb,
+        })
+
     return {
         'nome': nome,
         'salario_bruto': salario_bruto,
@@ -130,6 +174,10 @@ def auditar_colaborador(nome: str, verbas: list) -> dict:
         'inss_calculado': inss_calculado,
         'inss_encontrado': inss_encontrado,
         'inss_status': inss_status,
+        'verbas_inss': verbas_inss,
+        'verbas_irrf': verbas_irrf,
+        'verbas_salario': verbas_salario,
+        'rubricas_detalhadas': rubricas_detalhadas,
         'base_irrf': base_irrf,
         'irrf_calculado': irrf_calculado,
         'irrf_encontrado': irrf_encontrado,

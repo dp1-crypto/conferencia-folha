@@ -294,6 +294,75 @@ async function analisarMesAnterior(){
   }
 }
 
+/* ── helpers de célula reutilizáveis ── */
+function _fieldCells(ant, atu, diff, pct, borderLeft){
+  var diffCls = diff>0?'pct-up':diff<0?'pct-down':'';
+  var arrow   = diff>0?'▲':diff<0?'▼':'';
+  var pctStr  = Math.abs(pct)>=1?' <small style="font-size:.68rem">('+pct+'%)</small>':'';
+  var diffFmt = Math.abs(diff)<0.06
+    ? '<span style="color:#9ca3af">—</span>'
+    : '<span class="'+diffCls+'">'+arrow+' '+brl(Math.abs(diff))+pctStr+'</span>';
+  var bl = borderLeft?';border-left:2px solid #e5e7eb':'';
+  return '<td style="text-align:right'+bl+'">'+brl(ant)+'</td>'
+    +'<td style="text-align:right">'+brl(atu)+'</td>'
+    +'<td style="text-align:right">'+diffFmt+'</td>';
+}
+
+function _badgeComp(criticidade){
+  var map = {alta:['badge-alta','CRÍTICO'],media:['badge-media','ATENÇÃO'],baixa:['badge-baixa','BAIXO'],ok:['badge ok','OK']};
+  var b = map[criticidade]||map.ok;
+  return '<span class="'+b[0]+'" style="font-size:.68rem">'+b[1]+'</span>';
+}
+
+/* ── sub-tabela de rubricas do colaborador ── */
+function _rubricas_subtable(rubricas){
+  if(!rubricas||!rubricas.length) return '<p style="font-size:.78rem;color:#9ca3af;padding:.5rem">Nenhuma rubrica disponível.</p>';
+  var divergentes = rubricas.filter(function(r){return r.status!=='ok'});
+  var iguais      = rubricas.filter(function(r){return r.status==='ok'});
+
+  function rbRow(rb){
+    var st = rb.status;
+    var bg = st==='novo'?'#f0fdf4':st==='removido'?'#fff1f2':st==='alterado'?'#fffbeb':'';
+    var badge = st==='novo'
+      ? '<span class="rb-badge rb-novo">NOVA</span>'
+      : st==='removido'
+      ? '<span class="rb-badge rb-removido">REMOVIDA</span>'
+      : st==='alterado'
+      ? '<span class="rb-badge rb-alterado">ALTERADA</span>'
+      : '<span class="rb-badge rb-ok">OK</span>';
+    var diff = rb.diferenca||0;
+    var diffFmt = Math.abs(diff)<0.06
+      ? ''
+      : '<span class="'+(diff>0?'pct-up':'pct-down')+'" style="font-size:.75rem">'+(diff>0?'▲':'▼')+' '+brl(Math.abs(diff))+'</span>';
+    return '<tr style="background:'+bg+'">'
+      +'<td style="font-size:.78rem">'+rb.rubrica+'</td>'
+      +'<td style="text-align:right;font-size:.78rem">'+brl(rb.valor_anterior)+'</td>'
+      +'<td style="text-align:right;font-size:.78rem">'+brl(rb.valor_atual)+'</td>'
+      +'<td style="text-align:right;font-size:.78rem">'+diffFmt+'</td>'
+      +'<td style="text-align:center">'+badge+'</td>'
+      +'</tr>';
+  }
+
+  var hdr = '<table style="width:100%;border-collapse:collapse;margin-top:.5rem">'
+    +'<thead><tr style="background:#f8f9fa">'
+    +'<th style="text-align:left;padding:.3rem .5rem;font-size:.75rem;color:#6b7280;font-weight:500">Rubrica</th>'
+    +'<th style="text-align:right;padding:.3rem .5rem;font-size:.75rem;color:#6b7280;font-weight:500">Anterior</th>'
+    +'<th style="text-align:right;padding:.3rem .5rem;font-size:.75rem;color:#6b7280;font-weight:500">Atual</th>'
+    +'<th style="text-align:right;padding:.3rem .5rem;font-size:.75rem;color:#6b7280;font-weight:500">Δ</th>'
+    +'<th style="text-align:center;padding:.3rem .5rem;font-size:.75rem;color:#6b7280;font-weight:500">Status</th>'
+    +'</tr></thead><tbody>';
+
+  var rows = '';
+  divergentes.forEach(function(rb){rows+=rbRow(rb)});
+  if(iguais.length){
+    rows+='<tr><td colspan="5" style="padding:.25rem .5rem">'
+      +'<details><summary style="font-size:.72rem;color:#9ca3af;cursor:pointer">'+iguais.length+' rubrica(s) sem alteração</summary>';
+    iguais.forEach(function(rb){rows+=rbRow(rb)});
+    rows+='</details></td></tr>';
+  }
+  return hdr+rows+'</tbody></table>';
+}
+
 function renderMesAnterior(data){
   var el=document.getElementById('results-anterior');
   if(data.error){el.innerHTML='<div class="err-box"><h4>Erro</h4><p>'+data.error+'</p></div>';return}
@@ -303,30 +372,30 @@ function renderMesAnterior(data){
   // ── Cards de resumo ──────────────────────────────────────────────────────
   var html='<div class="stats" style="grid-template-columns:repeat(5,1fr)">'
     +'<div class="stat t"><div class="n">'+r.total_atual+'</div><div class="l">Total na folha</div></div>'
-    +'<div class="stat" style="--c:#10b981"><div class="n" style="color:#10b981">'+r.novos+'</div><div class="l">Novos</div></div>'
-    +'<div class="stat" style="--c:#A72C31"><div class="n" style="color:#A72C31">'+r.desligados+'</div><div class="l">Desligados</div></div>'
-    +'<div class="stat" style="--c:#f59e0b"><div class="n" style="color:#f59e0b">'+r.alterados+'</div><div class="l">Com alteração</div></div>'
-    +'<div class="stat" style="--c:#6b7280"><div class="n" style="color:#6b7280">'+r.sem_alteracao+'</div><div class="l">Sem alteração</div></div>'
+    +'<div class="stat"><div class="n" style="color:#10b981">'+r.novos+'</div><div class="l">Novos</div></div>'
+    +'<div class="stat"><div class="n" style="color:#A72C31">'+r.desligados+'</div><div class="l">Desligados</div></div>'
+    +'<div class="stat"><div class="n" style="color:#f59e0b">'+r.alterados+'</div><div class="l">Com alteração</div></div>'
+    +'<div class="stat"><div class="n" style="color:#6b7280">'+r.sem_alteracao+'</div><div class="l">Sem alteração</div></div>'
     +'</div>';
 
-  // ── Novos e Desligados lado a lado ───────────────────────────────────────
-  var temNovos = data.colaboradores_novos&&data.colaboradores_novos.length;
+  // ── Novos e Desligados ───────────────────────────────────────────────────
+  var temNovos  = data.colaboradores_novos&&data.colaboradores_novos.length;
   var temDeslig = data.colaboradores_desligados&&data.colaboradores_desligados.length;
   if(temNovos||temDeslig){
     html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">';
     if(temNovos){
-      html+='<div class="card" style="margin-bottom:0"><div class="sec-title" style="color:#059669">&#10010; Novos Colaboradores</div>';
+      html+='<div class="card" style="margin-bottom:0"><div class="sec-title" style="color:#059669">✚ Novos Colaboradores</div>';
       data.colaboradores_novos.forEach(function(n){
-        html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .4rem;border-bottom:1px solid #f3f4f6">'
+        html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .4rem;border-bottom:1px solid #f3f4f6">'
           +'<span style="font-weight:600;font-size:.83rem">'+n.nome+'</span>'
           +'<span class="badge-novo" style="font-size:.7rem">'+brl(n.liquido)+'</span></div>';
       });
       html+='</div>';
     } else { html+='<div></div>'; }
     if(temDeslig){
-      html+='<div class="card" style="margin-bottom:0"><div class="sec-title" style="color:#A72C31">&#10006; Desligados</div>';
+      html+='<div class="card" style="margin-bottom:0"><div class="sec-title" style="color:#A72C31">✖ Desligados</div>';
       data.colaboradores_desligados.forEach(function(d){
-        html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .4rem;border-bottom:1px solid #f3f4f6">'
+        html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .4rem;border-bottom:1px solid #f3f4f6">'
           +'<span style="font-weight:600;font-size:.83rem">'+d.nome+'</span>'
           +'<span class="badge-desligado" style="font-size:.7rem">'+brl(d.liquido)+'</span></div>';
       });
@@ -335,18 +404,20 @@ function renderMesAnterior(data){
     html+='</div>';
   }
 
-  // ── Tabela comparativa — um colaborador por linha ────────────────────────
+  // ── Tabela comparativa expansível ────────────────────────────────────────
   if(data.comparativo&&data.comparativo.length){
-    html+='<div class="card"><div class="sec-title">Comparativo por Colaborador</div>'
+    html+='<div class="card"><div class="sec-title">Comparativo por Colaborador'
+      +'<span style="font-size:.72rem;font-weight:400;color:#9ca3af;margin-left:.5rem">— clique em ▶ para ver rubricas detalhadas</span></div>'
       +'<div style="overflow-x:auto">'
-      +'<table class="tbl-comp"><thead><tr>'
-      +'<th rowspan="2" style="min-width:160px">Colaborador</th>'
-      +'<th rowspan="2" style="text-align:center;width:80px">Status</th>'
+      +'<table class="tbl-comp" id="tbl-ant"><thead><tr>'
+      +'<th style="width:28px"></th>'
+      +'<th style="min-width:150px">Colaborador</th>'
+      +'<th style="text-align:center;width:76px">Status</th>'
       +'<th colspan="3" style="text-align:center;border-left:2px solid #e5e7eb">Líquido a Receber</th>'
       +'<th colspan="3" style="text-align:center;border-left:2px solid #e5e7eb">Total Vencimentos</th>'
       +'<th colspan="3" style="text-align:center;border-left:2px solid #e5e7eb">Total Descontos</th>'
-      +'<th rowspan="2" style="text-align:center;width:60px">Rubricas</th>'
       +'</tr><tr>'
+      +'<th></th><th></th><th></th>'
       +'<th style="text-align:right;border-left:2px solid #e5e7eb;font-weight:500;color:#6b7280">Anterior</th>'
       +'<th style="text-align:right;font-weight:500;color:#6b7280">Atual</th>'
       +'<th style="text-align:right;font-weight:600">Δ</th>'
@@ -358,67 +429,30 @@ function renderMesAnterior(data){
       +'<th style="text-align:right;font-weight:600">Δ</th>'
       +'</tr></thead><tbody>';
 
-    data.comparativo.forEach(function(c){
+    data.comparativo.forEach(function(c, idx){
       var rowCls = c.criticidade==='alta'?'comp-row-alta'
                  : c.criticidade==='media'?'comp-row-media'
-                 : c.criticidade==='baixa'?'comp-row-baixa'
-                 : 'comp-row-ok';
-      var badgeCls = c.criticidade==='alta'?'badge-alta'
-                   : c.criticidade==='media'?'badge-media'
-                   : c.criticidade==='baixa'?'badge-baixa'
-                   : 'badge ok';
-      var badgeTxt = c.criticidade==='alta'?'CRÍTICO'
-                   : c.criticidade==='media'?'ATENÇÃO'
-                   : c.criticidade==='baixa'?'BAIXO'
-                   : 'OK';
+                 : c.criticidade==='baixa'?'comp-row-baixa':'comp-row-ok';
+      var ndivRb = (c.rubricas_comparadas||[]).filter(function(r){return r.status!=='ok'}).length;
+      var detailId = 'det-ant-'+idx;
 
-      function deltaCell(diff, pct, borderLeft){
-        if(Math.abs(diff)<0.06) return '<td style="text-align:right'+(borderLeft?';border-left:2px solid #e5e7eb':'')+'"></td><td style="text-align:right"></td><td style="text-align:right;color:#9ca3af">—</td>';
-        var cls = diff>0?'pct-up':'pct-down';
-        var arrow = diff>0?'▲':'▼';
-        var pctStr = pct!==0?' <small style="font-size:.68rem">('+pct+'%)</small>':'';
-        return '<td style="text-align:right'+(borderLeft?';border-left:2px solid #e5e7eb':'')+'">'
-          +brl(diff>0?c.liq_ant:c.venc_ant||c.desc_ant||0)+'</td>'  // placeholder — veja abaixo
-          +'<td style="text-align:right"></td>'
-          +'<td style="text-align:right" class="'+cls+'">'+arrow+' '+brl(Math.abs(diff))+pctStr+'</td>';
-      }
-
-      // Células individuais por campo
-      function fieldCells(ant, atu, diff, pct, borderLeft){
-        var diffCls = diff>0?'pct-up':diff<0?'pct-down':'';
-        var arrow = diff>0?'▲':diff<0?'▼':'';
-        var pctStr = Math.abs(pct)>=1?' <small style="font-size:.68rem">('+pct+'%)</small>':'';
-        var diffFmt = Math.abs(diff)<0.06
-          ? '<span style="color:#9ca3af">—</span>'
-          : '<span class="'+diffCls+'">'+arrow+' '+brl(Math.abs(diff))+pctStr+'</span>';
-        return '<td style="text-align:right'+(borderLeft?';border-left:2px solid #e5e7eb':'')+'">'+brl(ant)+'</td>'
-          +'<td style="text-align:right">'+brl(atu)+'</td>'
-          +'<td style="text-align:right">'+diffFmt+'</td>';
-      }
-
-      // Rubricas novas/removidas — tooltip compacto
-      var rbCount = (c.rubricas_novas||[]).length+(c.rubricas_removidas||[]).length;
-      var rbCell = '';
-      if(rbCount){
-        var rbTip = '';
-        (c.rubricas_novas||[]).forEach(function(rb){rbTip+='+ '+rb.rubrica+' ('+brl(rb.valor)+')\n'});
-        (c.rubricas_removidas||[]).forEach(function(rb){rbTip+='- '+rb.rubrica+' ('+brl(rb.valor)+')\n'});
-        rbCell='<td style="text-align:center"><span title="'+rbTip.trim()+'" style="cursor:help;background:#eff6ff;color:#3b82f6;border-radius:20px;padding:.15rem .55rem;font-size:.72rem;font-weight:700">'+rbCount+'</span></td>';
-      } else {
-        rbCell='<td style="text-align:center;color:#9ca3af;font-size:.75rem">—</td>';
-      }
-
-      html+='<tr class="'+rowCls+'">'
-        +'<td style="font-weight:600;font-size:.83rem">'+c.nome+'</td>'
-        +'<td style="text-align:center"><span class="'+badgeCls+'" style="font-size:.68rem">'+badgeTxt+'</span></td>'
-        +fieldCells(c.liq_ant,  c.liq_atu,  c.liq_diff,  c.liq_pct,  true)
-        +fieldCells(c.venc_ant, c.venc_atu, c.venc_diff, c.venc_pct, true)
-        +fieldCells(c.desc_ant, c.desc_atu, c.desc_diff, c.desc_pct, true)
-        +rbCell
-        +'</tr>';
+      html+='<tr class="'+rowCls+'" style="cursor:pointer" onclick="togDetail(\''+detailId+'\')">'
+        +'<td style="text-align:center;color:#9ca3af;font-size:.8rem" id="arr-'+detailId+'">▶</td>'
+        +'<td style="font-weight:600;font-size:.83rem">'+c.nome
+          +(ndivRb>0?' <span style="background:#fee2e2;color:#991b1b;border-radius:10px;padding:.1rem .45rem;font-size:.65rem;font-weight:700">'+ndivRb+' dif.</span>':'')
+        +'</td>'
+        +'<td style="text-align:center">'+_badgeComp(c.criticidade)+'</td>'
+        +_fieldCells(c.liq_ant,  c.liq_atu,  c.liq_diff,  c.liq_pct,  true)
+        +_fieldCells(c.venc_ant, c.venc_atu, c.venc_diff, c.venc_pct, true)
+        +_fieldCells(c.desc_ant, c.desc_atu, c.desc_diff, c.desc_pct, true)
+        +'</tr>'
+        +'<tr id="'+detailId+'" style="display:none"><td colspan="12" style="padding:.75rem 1rem 1rem;background:#fafbff;border-bottom:2px solid #e5e7eb">'
+        +_rubricas_subtable(c.rubricas_comparadas)
+        +'</td></tr>';
     });
+
     html+='</tbody></table></div>'
-      +'<p style="font-size:.72rem;color:#9ca3af;margin-top:.6rem">▲ aumento &nbsp;▼ redução &nbsp;·&nbsp; Rubricas: número de verbas novas/removidas (passe o mouse para ver detalhes)</p>'
+      +'<p style="font-size:.72rem;color:#9ca3af;margin-top:.6rem">▲ aumento &nbsp;▼ redução &nbsp;·&nbsp; Clique na linha para expandir o detalhamento de rubricas</p>'
       +'</div>';
   }
 
@@ -440,6 +474,15 @@ function renderMesAnterior(data){
 
   el.innerHTML=html;
   el.scrollIntoView({behavior:'smooth'});
+}
+
+function togDetail(id){
+  var tr=document.getElementById(id);
+  var arr=document.getElementById('arr-'+id);
+  if(!tr) return;
+  var open=tr.style.display!=='none';
+  tr.style.display=open?'none':'table-row';
+  if(arr) arr.textContent=open?'▶':'▼';
 }
 
 /* ═══════════════════════════════════════════
@@ -566,72 +609,128 @@ function renderImpostos(data){
     +'<div class="stat"><div class="n" style="color:#A72C31">'+r.total_criticos+'</div><div class="l">Críticos</div></div>'
     +'</div>';
 
-  // ── Tabela principal ─────────────────────────────────────────────────────
-  html+='<div class="card"><div class="sec-title">Auditoria INSS / IRRF — por Colaborador</div>'
-    +'<div style="overflow-x:auto">'
-    +'<table class="tbl-comp"><thead>'
-    +'<tr>'
-    +'<th rowspan="2" style="min-width:160px">Colaborador</th>'
-    +'<th rowspan="2" style="text-align:right;width:100px">Sal. Bruto</th>'
-    +'<th colspan="4" style="text-align:center;border-left:2px solid #e5e7eb;background:#fef9f9">INSS</th>'
-    +'<th colspan="4" style="text-align:center;border-left:2px solid #e5e7eb;background:#f9f9ff">IRRF</th>'
-    +'</tr>'
-    +'<tr>'
-    +'<th style="text-align:right;border-left:2px solid #e5e7eb;font-weight:500;color:#6b7280;background:#fef9f9">Calculado</th>'
-    +'<th style="text-align:right;font-weight:500;color:#6b7280;background:#fef9f9">Encontrado</th>'
-    +'<th style="text-align:right;font-weight:600;background:#fef9f9">Δ</th>'
-    +'<th style="text-align:center;background:#fef9f9">Status</th>'
-    +'<th style="text-align:right;border-left:2px solid #e5e7eb;font-weight:500;color:#6b7280;background:#f9f9ff">Calculado</th>'
-    +'<th style="text-align:right;font-weight:500;color:#6b7280;background:#f9f9ff">Encontrado</th>'
-    +'<th style="text-align:right;font-weight:600;background:#f9f9ff">Δ</th>'
-    +'<th style="text-align:center;background:#f9f9ff">Status</th>'
-    +'</tr>'
-    +'</thead><tbody>';
-
+  // ── helpers locais ───────────────────────────────────────────────────────
   function statusBadge(st){
-    if(st==='OK')        return '<span class="imp-badge imp-ok">OK</span>';
-    if(st==='AUSENTE')   return '<span class="imp-badge imp-ausente">AUSENTE</span>';
-    if(st==='DIVERGENTE')return '<span class="imp-badge imp-div">DIVERGENTE</span>';
+    if(st==='OK')             return '<span class="imp-badge imp-ok">OK</span>';
+    if(st==='AUSENTE')        return '<span class="imp-badge imp-ausente">AUSENTE</span>';
+    if(st==='DIVERGENTE')     return '<span class="imp-badge imp-div">DIVERGENTE</span>';
     if(st==='ARREDONDAMENTO') return '<span class="imp-badge imp-arr">ARRED.</span>';
     return '<span class="imp-badge imp-nd">SEM DADOS</span>';
   }
 
   function deltaImposto(calc, enc, status){
-    if(status==='SEM_DADOS'||status==='OK'||status==='ARREDONDAMENTO'){
+    if(status==='SEM_DADOS'||status==='OK'||status==='ARREDONDAMENTO')
       return status==='OK'?'<span style="color:#10b981;font-weight:600">—</span>':'<span style="color:#9ca3af">—</span>';
-    }
-    var diff = Math.abs(calc - enc);
-    var cls  = calc > enc ? 'pct-up' : 'pct-down';
-    var lbl  = calc > enc ? '▲ falta' : '▼ excesso';
+    var diff=Math.abs(calc-enc);
+    var cls=calc>enc?'pct-up':'pct-down';
+    var lbl=calc>enc?'▲ falta':'▼ excesso';
     return '<span class="'+cls+'" style="font-size:.78rem;font-weight:700">'+lbl+' '+brl(diff)+'</span>';
   }
 
-  data.colaboradores.forEach(function(c){
-    var temDiv = c.divergencias && c.divergencias.length > 0;
-    var rowCls = temDiv
-      ? (c.divergencias.some(function(d){return d.criticidade==='alta'}) ? 'comp-row-alta' : 'comp-row-media')
-      : (c.inss_status==='SEM_DADOS'&&c.irrf_status==='SEM_DADOS' ? '' : 'comp-row-ok');
+  function verbas_detail_imp(c){
+    // Sub-tabela com todas as verbas do recibo, destacando INSS, IRRF e salário
+    var rubricas = c.rubricas_detalhadas||[];
+    if(!rubricas.length) return '<p style="font-size:.78rem;color:#9ca3af;padding:.5rem">Nenhuma rubrica encontrada no recibo.</p>';
 
-    html+='<tr class="'+rowCls+'">'
+    var tipoLabel = {inss:'INSS',irrf:'IRRF',salario:'SALÁRIO',outro:'Outro'};
+    var tipoCor   = {inss:'#fee2e2',irrf:'#eff6ff',salario:'#f0fdf4',outro:''};
+    var tipoBadge = {
+      inss:   '<span class="rb-badge" style="background:#fee2e2;color:#991b1b">INSS</span>',
+      irrf:   '<span class="rb-badge" style="background:#eff6ff;color:#1d4ed8">IRRF</span>',
+      salario:'<span class="rb-badge" style="background:#f0fdf4;color:#166534">SALÁRIO</span>',
+      outro:  '',
+    };
+
+    // Divergências calculadas vs encontradas
+    var divINSS  = c.inss_status!=='OK'&&c.inss_status!=='SEM_DADOS'&&c.inss_status!=='ARREDONDAMENTO';
+    var divIRRF  = c.irrf_status!=='OK'&&c.irrf_status!=='SEM_DADOS'&&c.irrf_status!=='ARREDONDAMENTO';
+
+    var rows='';
+    // INSS calculado vs encontrado (linha de auditoria)
+    rows+='<tr style="background:#fef3c7;font-weight:600">'
+      +'<td style="font-size:.75rem;color:#92400e">⚖ INSS esperado (calculado)</td>'
+      +'<td style="text-align:right;font-size:.75rem;color:#92400e">'+brl(c.inss_calculado)+'</td>'
+      +'<td colspan="2" style="font-size:.72rem;color:#9ca3af">Base: '+brl(c.base_inss)+' · Tabela progressiva 2024</td>'
+      +'</tr>';
+    rows+='<tr style="background:#fef3c7;font-weight:600">'
+      +'<td style="font-size:.75rem;color:#92400e">⚖ IRRF esperado (calculado)</td>'
+      +'<td style="text-align:right;font-size:.75rem;color:#92400e">'+brl(c.irrf_calculado)+'</td>'
+      +'<td colspan="2" style="font-size:.72rem;color:#9ca3af">Base: '+brl(c.base_irrf)+' · Tolerância R$ 10,00</td>'
+      +'</tr>';
+
+    rubricas.forEach(function(v){
+      var bg=tipoCor[v.tipo]||'';
+      var marcador='';
+      if(v.tipo==='inss'&&divINSS) marcador=' <span style="color:#A72C31;font-weight:700">⚠</span>';
+      if(v.tipo==='irrf'&&divIRRF) marcador=' <span style="color:#A72C31;font-weight:700">⚠</span>';
+      rows+='<tr style="background:'+bg+'">'
+        +'<td style="font-size:.77rem">'+(v.codigo?'<span style="color:#9ca3af;margin-right:.3rem">'+v.codigo+'</span>':'')+v.descricao+marcador+'</td>'
+        +'<td style="text-align:right;font-size:.77rem;font-weight:600">'+brl(v.valor)+'</td>'
+        +'<td>'+tipoBadge[v.tipo]+'</td>'
+        +'<td></td>'
+        +'</tr>';
+    });
+
+    return '<table style="width:100%;border-collapse:collapse;margin-top:.5rem">'
+      +'<thead><tr style="background:#f8f9fa">'
+      +'<th style="text-align:left;padding:.3rem .5rem;font-size:.74rem;color:#6b7280;font-weight:500">Rubrica do recibo</th>'
+      +'<th style="text-align:right;padding:.3rem .5rem;font-size:.74rem;color:#6b7280;font-weight:500">Valor</th>'
+      +'<th style="padding:.3rem .5rem;font-size:.74rem;color:#6b7280;font-weight:500">Tipo</th>'
+      +'<th></th>'
+      +'</tr></thead><tbody>'+rows+'</tbody></table>';
+  }
+
+  // ── Tabela principal expansível ──────────────────────────────────────────
+  html+='<div class="card"><div class="sec-title">Auditoria INSS / IRRF — por Colaborador'
+    +'<span style="font-size:.72rem;font-weight:400;color:#9ca3af;margin-left:.5rem">— clique em ▶ para ver rubricas do recibo</span></div>'
+    +'<div style="overflow-x:auto">'
+    +'<table class="tbl-comp"><thead>'
+    +'<tr>'
+    +'<th style="width:28px"></th>'
+    +'<th style="min-width:150px">Colaborador</th>'
+    +'<th style="text-align:right;width:90px">Sal. Bruto</th>'
+    +'<th colspan="4" style="text-align:center;border-left:2px solid #e5e7eb;background:#fef9f9">INSS</th>'
+    +'<th colspan="4" style="text-align:center;border-left:2px solid #e5e7eb;background:#f9f9ff">IRRF</th>'
+    +'</tr><tr>'
+    +'<th></th><th></th><th></th>'
+    +'<th style="text-align:right;border-left:2px solid #e5e7eb;font-weight:500;color:#6b7280;background:#fef9f9">Calc.</th>'
+    +'<th style="text-align:right;font-weight:500;color:#6b7280;background:#fef9f9">Enc.</th>'
+    +'<th style="text-align:right;font-weight:600;background:#fef9f9">Δ</th>'
+    +'<th style="text-align:center;background:#fef9f9">Status</th>'
+    +'<th style="text-align:right;border-left:2px solid #e5e7eb;font-weight:500;color:#6b7280;background:#f9f9ff">Calc.</th>'
+    +'<th style="text-align:right;font-weight:500;color:#6b7280;background:#f9f9ff">Enc.</th>'
+    +'<th style="text-align:right;font-weight:600;background:#f9f9ff">Δ</th>'
+    +'<th style="text-align:center;background:#f9f9ff">Status</th>'
+    +'</tr></thead><tbody>';
+
+  data.colaboradores.forEach(function(c, idx){
+    var temDiv=c.divergencias&&c.divergencias.length>0;
+    var rowCls=temDiv
+      ?(c.divergencias.some(function(d){return d.criticidade==='alta'})?'comp-row-alta':'comp-row-media')
+      :(c.inss_status==='SEM_DADOS'&&c.irrf_status==='SEM_DADOS'?'':'comp-row-ok');
+    var detailId='det-imp-'+idx;
+
+    html+='<tr class="'+rowCls+'" style="cursor:pointer" onclick="togDetail(\''+detailId+'\')">'
+      +'<td style="text-align:center;color:#9ca3af;font-size:.8rem" id="arr-'+detailId+'">▶</td>'
       +'<td style="font-weight:600;font-size:.83rem">'+c.nome+'</td>'
       +'<td style="text-align:right">'+brl(c.salario_bruto)+'</td>'
-      // INSS
       +'<td style="text-align:right;border-left:2px solid #e5e7eb">'+brl(c.inss_calculado)+'</td>'
       +'<td style="text-align:right">'+brl(c.inss_encontrado)+'</td>'
-      +'<td style="text-align:right">'+deltaImposto(c.inss_calculado, c.inss_encontrado, c.inss_status)+'</td>'
+      +'<td style="text-align:right">'+deltaImposto(c.inss_calculado,c.inss_encontrado,c.inss_status)+'</td>'
       +'<td style="text-align:center">'+statusBadge(c.inss_status)+'</td>'
-      // IRRF
       +'<td style="text-align:right;border-left:2px solid #e5e7eb">'+brl(c.irrf_calculado)+'</td>'
       +'<td style="text-align:right">'+brl(c.irrf_encontrado)+'</td>'
-      +'<td style="text-align:right">'+deltaImposto(c.irrf_calculado, c.irrf_encontrado, c.irrf_status)+'</td>'
+      +'<td style="text-align:right">'+deltaImposto(c.irrf_calculado,c.irrf_encontrado,c.irrf_status)+'</td>'
       +'<td style="text-align:center">'+statusBadge(c.irrf_status)+'</td>'
-      +'</tr>';
+      +'</tr>'
+      +'<tr id="'+detailId+'" style="display:none"><td colspan="11" style="padding:.75rem 1rem 1rem;background:#fafbff;border-bottom:2px solid #e5e7eb">'
+      +verbas_detail_imp(c)
+      +'</td></tr>';
   });
 
   html+='</tbody></table></div>'
     +'<p style="font-size:.72rem;color:#9ca3af;margin-top:.6rem">'
-    +'▲ falta = calculado maior que encontrado &nbsp;·&nbsp; ▼ excesso = encontrado maior que calculado &nbsp;·&nbsp; '
-    +'IRRF: tolerância de R$ 10,00 (dedução de dependentes/pensão não computados)'
+    +'▲ falta · ▼ excesso &nbsp;·&nbsp; ⚠ rubrica divergente &nbsp;·&nbsp; IRRF: tolerância R$ 10,00'
     +'</p></div>';
 
   // ── Tabela INSS de referência ─────────────────────────────────────────────

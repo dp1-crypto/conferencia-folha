@@ -109,21 +109,39 @@ def compare_months(folha_atual: dict, folha_anterior: dict) -> dict:
         if tem_diff:
             alteracoes.append({'nome': nome_exibir, 'criticidade': criticidade})
 
-        # Compara rubricas
+        # Compara rubricas — lista completa com status por verba
         verbas_atu = {v['descricao'].upper(): v['valor'] for v in atual.get('verbas', [])}
         verbas_ant = {v['descricao'].upper(): v['valor'] for v in anterior.get('verbas', [])}
         rb_novas     = []
         rb_removidas = []
+        rubricas_comparadas = []
 
-        for desc, val in verbas_atu.items():
+        todas_rubricas = sorted(set(list(verbas_atu.keys()) + list(verbas_ant.keys())))
+        for desc in todas_rubricas:
+            v_ant = verbas_ant.get(desc, 0)
+            v_atu = verbas_atu.get(desc, 0)
+            diff  = round(v_atu - v_ant, 2)
+
             if desc not in verbas_ant:
-                rb_novas.append({'rubrica': desc.title(), 'valor': val})
-                rubricas_novas.append({'nome': nome_exibir, 'rubrica': desc.title(), 'valor': val})
+                status_rb = 'novo'
+                rb_novas.append({'rubrica': desc.title(), 'valor': v_atu})
+                rubricas_novas.append({'nome': nome_exibir, 'rubrica': desc.title(), 'valor': v_atu})
+            elif desc not in verbas_atu:
+                status_rb = 'removido'
+                rb_removidas.append({'rubrica': desc.title(), 'valor': v_ant})
+                rubricas_removidas.append({'nome': nome_exibir, 'rubrica': desc.title(), 'valor': v_ant})
+            elif abs(diff) > TOLERANCIA_DIVERGENCIA:
+                status_rb = 'alterado'
+            else:
+                status_rb = 'ok'
 
-        for desc, val in verbas_ant.items():
-            if desc not in verbas_atu:
-                rb_removidas.append({'rubrica': desc.title(), 'valor': val})
-                rubricas_removidas.append({'nome': nome_exibir, 'rubrica': desc.title(), 'valor': val})
+            rubricas_comparadas.append({
+                'rubrica':          desc.title(),
+                'valor_anterior':   v_ant,
+                'valor_atual':      v_atu,
+                'diferenca':        diff,
+                'status':           status_rb,
+            })
 
         if not tem_diff and not rb_novas and not rb_removidas:
             sem_alteracao += 1
@@ -146,9 +164,10 @@ def compare_months(folha_atual: dict, folha_anterior: dict) -> dict:
             'desc_atu':  desc_atu,
             'desc_diff': desc_diff,
             'desc_pct':  desc_pct,
-            # Rubricas
-            'rubricas_novas':     rb_novas,
-            'rubricas_removidas': rb_removidas,
+            # Rubricas detalhadas
+            'rubricas_novas':       rb_novas,
+            'rubricas_removidas':   rb_removidas,
+            'rubricas_comparadas':  rubricas_comparadas,   # lista completa com status
         })
 
     # Ordena: críticos primeiro, depois por nome

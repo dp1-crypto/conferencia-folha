@@ -188,6 +188,13 @@ details summary{font-size:.72rem;color:#6b7280;cursor:pointer;margin-top:.5rem;u
 .imp-arr    {background:#fef9c3;color:#92400e}
 .imp-nd     {background:#f3f4f6;color:#9ca3af}
 
+/* ── Badges de status rubricas (Mês Anterior / INSS+IRRF) ── */
+.rb-badge    {display:inline-flex;align-items:center;padding:.15rem .5rem;border-radius:12px;font-size:.65rem;font-weight:700;white-space:nowrap}
+.rb-novo     {background:#dbeafe;color:#1e40af}
+.rb-removido {background:#fee2e2;color:#991b1b}
+.rb-alterado {background:#fef9c3;color:#92400e}
+.rb-ok       {background:#f3f4f6;color:#6b7280}
+
 /* ── Config section ── */
 .config-card{background:#f8faff;border:1px solid #dbeafe;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
 .config-card h3{font-size:.9rem;font-weight:600;color:#1e40af;margin-bottom:.5rem}
