@@ -294,74 +294,127 @@ function renderMesAnterior(data){
   if(data.error){el.innerHTML='<div class="err-box"><h4>Erro</h4><p>'+data.error+'</p></div>';return}
 
   var r=data.resumo;
-  var html='<div class="stats-4">'
-    +'<div class="stat"><div class="n" style="color:#333">'+r.total_atual+'</div><div class="l">Folha Atual</div></div>'
-    +'<div class="stat"><div class="n" style="color:#10b981">'+r.novos+'</div><div class="l">Novos</div></div>'
-    +'<div class="stat"><div class="n" style="color:#A72C31">'+r.desligados+'</div><div class="l">Desligados</div></div>'
-    +'<div class="stat"><div class="n" style="color:#f59e0b">'+r.alterados+'</div><div class="l">Alterados</div></div>'
+
+  // ── Cards de resumo ──────────────────────────────────────────────────────
+  var html='<div class="stats" style="grid-template-columns:repeat(5,1fr)">'
+    +'<div class="stat t"><div class="n">'+r.total_atual+'</div><div class="l">Total na folha</div></div>'
+    +'<div class="stat" style="--c:#10b981"><div class="n" style="color:#10b981">'+r.novos+'</div><div class="l">Novos</div></div>'
+    +'<div class="stat" style="--c:#A72C31"><div class="n" style="color:#A72C31">'+r.desligados+'</div><div class="l">Desligados</div></div>'
+    +'<div class="stat" style="--c:#f59e0b"><div class="n" style="color:#f59e0b">'+r.alterados+'</div><div class="l">Com alteração</div></div>'
+    +'<div class="stat" style="--c:#6b7280"><div class="n" style="color:#6b7280">'+r.sem_alteracao+'</div><div class="l">Sem alteração</div></div>'
     +'</div>';
 
-  // Novos
-  if(data.colaboradores_novos&&data.colaboradores_novos.length){
-    html+='<div class="card"><div class="sec-title">Novos Colaboradores</div>';
-    data.colaboradores_novos.forEach(function(n){
-      html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .6rem;border-bottom:1px solid #f3f4f6">'
-        +'<span style="font-weight:600;font-size:.85rem">'+n.nome+'</span>'
-        +'<span><span class="badge-novo">NOVO</span> <span style="font-size:.8rem;color:#6b7280;margin-left:.5rem">Liquido: '+brl(n.liquido)+'</span></span></div>';
-    });
+  // ── Novos e Desligados lado a lado ───────────────────────────────────────
+  var temNovos = data.colaboradores_novos&&data.colaboradores_novos.length;
+  var temDeslig = data.colaboradores_desligados&&data.colaboradores_desligados.length;
+  if(temNovos||temDeslig){
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">';
+    if(temNovos){
+      html+='<div class="card" style="margin-bottom:0"><div class="sec-title" style="color:#059669">&#10010; Novos Colaboradores</div>';
+      data.colaboradores_novos.forEach(function(n){
+        html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .4rem;border-bottom:1px solid #f3f4f6">'
+          +'<span style="font-weight:600;font-size:.83rem">'+n.nome+'</span>'
+          +'<span class="badge-novo" style="font-size:.7rem">'+brl(n.liquido)+'</span></div>';
+      });
+      html+='</div>';
+    } else { html+='<div></div>'; }
+    if(temDeslig){
+      html+='<div class="card" style="margin-bottom:0"><div class="sec-title" style="color:#A72C31">&#10006; Desligados</div>';
+      data.colaboradores_desligados.forEach(function(d){
+        html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .4rem;border-bottom:1px solid #f3f4f6">'
+          +'<span style="font-weight:600;font-size:.83rem">'+d.nome+'</span>'
+          +'<span class="badge-desligado" style="font-size:.7rem">'+brl(d.liquido)+'</span></div>';
+      });
+      html+='</div>';
+    }
     html+='</div>';
   }
 
-  // Desligados
-  if(data.colaboradores_desligados&&data.colaboradores_desligados.length){
-    html+='<div class="card"><div class="sec-title">Colaboradores Desligados</div>';
-    data.colaboradores_desligados.forEach(function(d){
-      html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .6rem;border-bottom:1px solid #f3f4f6">'
-        +'<span style="font-weight:600;font-size:.85rem">'+d.nome+'</span>'
-        +'<span><span class="badge-desligado">DESLIGADO</span> <span style="font-size:.8rem;color:#6b7280;margin-left:.5rem">Ultimo liquido: '+brl(d.liquido)+'</span></span></div>';
-    });
-    html+='</div>';
-  }
-
-  // Alteracoes
-  if(data.alteracoes&&data.alteracoes.length){
-    html+='<div class="card"><div class="sec-title">Alteracoes Salariais</div>'
-      +'<div style="overflow-x:auto"><table class="tbl-sigma"><thead><tr>'
-      +'<th>Colaborador</th><th>Campo</th><th style="text-align:right">Anterior</th><th style="text-align:right">Atual</th>'
-      +'<th style="text-align:right">Diferenca</th><th style="text-align:right">Variacao</th><th style="text-align:center">Criticidade</th>'
+  // ── Tabela comparativa — um colaborador por linha ────────────────────────
+  if(data.comparativo&&data.comparativo.length){
+    html+='<div class="card"><div class="sec-title">Comparativo por Colaborador</div>'
+      +'<div style="overflow-x:auto">'
+      +'<table class="tbl-comp"><thead><tr>'
+      +'<th rowspan="2" style="min-width:160px">Colaborador</th>'
+      +'<th rowspan="2" style="text-align:center;width:80px">Status</th>'
+      +'<th colspan="3" style="text-align:center;border-left:2px solid #e5e7eb">Líquido a Receber</th>'
+      +'<th colspan="3" style="text-align:center;border-left:2px solid #e5e7eb">Total Vencimentos</th>'
+      +'<th colspan="3" style="text-align:center;border-left:2px solid #e5e7eb">Total Descontos</th>'
+      +'<th rowspan="2" style="text-align:center;width:60px">Rubricas</th>'
+      +'</tr><tr>'
+      +'<th style="text-align:right;border-left:2px solid #e5e7eb;font-weight:500;color:#6b7280">Anterior</th>'
+      +'<th style="text-align:right;font-weight:500;color:#6b7280">Atual</th>'
+      +'<th style="text-align:right;font-weight:600">Δ</th>'
+      +'<th style="text-align:right;border-left:2px solid #e5e7eb;font-weight:500;color:#6b7280">Anterior</th>'
+      +'<th style="text-align:right;font-weight:500;color:#6b7280">Atual</th>'
+      +'<th style="text-align:right;font-weight:600">Δ</th>'
+      +'<th style="text-align:right;border-left:2px solid #e5e7eb;font-weight:500;color:#6b7280">Anterior</th>'
+      +'<th style="text-align:right;font-weight:500;color:#6b7280">Atual</th>'
+      +'<th style="text-align:right;font-weight:600">Δ</th>'
       +'</tr></thead><tbody>';
-    data.alteracoes.forEach(function(a){
-      var cls = a.criticidade==='alta'?'imposto-div':(a.criticidade==='media'?'':'imposto-ok');
-      var pctCls = a.diferenca>0?'pct-up':'pct-down';
-      var badgeCls = a.criticidade==='alta'?'badge-alta':(a.criticidade==='media'?'badge-media':'badge-baixa');
-      html+='<tr class="'+cls+'">'
-        +'<td style="font-weight:600">'+a.nome+'</td>'
-        +'<td>'+a.campo+'</td>'
-        +'<td style="text-align:right">'+brl(a.valor_anterior)+'</td>'
-        +'<td style="text-align:right">'+brl(a.valor_atual)+'</td>'
-        +'<td style="text-align:right" class="'+pctCls+'">'+brl(a.diferenca)+'</td>'
-        +'<td style="text-align:right" class="'+pctCls+'">'+a.pct_variacao+'%</td>'
-        +'<td style="text-align:center"><span class="'+badgeCls+'">'+a.badge_text+'</span></td></tr>';
-    });
-    html+='</tbody></table></div></div>';
-  }
 
-  // Rubricas novas/removidas
-  if(data.rubricas_novas&&data.rubricas_novas.length){
-    html+='<div class="card"><div class="sec-title">Rubricas Novas (apareceram na folha atual)</div>';
-    data.rubricas_novas.forEach(function(rb){
-      html+='<div style="padding:.3rem .6rem;border-bottom:1px solid #f3f4f6;font-size:.82rem">'
-        +'<strong>'+rb.nome+'</strong> — '+rb.rubrica+' <span style="color:#10b981;font-weight:600">'+brl(rb.valor)+'</span></div>';
+    data.comparativo.forEach(function(c){
+      var rowCls = c.criticidade==='alta'?'comp-row-alta'
+                 : c.criticidade==='media'?'comp-row-media'
+                 : c.criticidade==='baixa'?'comp-row-baixa'
+                 : 'comp-row-ok';
+      var badgeCls = c.criticidade==='alta'?'badge-alta'
+                   : c.criticidade==='media'?'badge-media'
+                   : c.criticidade==='baixa'?'badge-baixa'
+                   : 'badge ok';
+      var badgeTxt = c.criticidade==='alta'?'CRÍTICO'
+                   : c.criticidade==='media'?'ATENÇÃO'
+                   : c.criticidade==='baixa'?'BAIXO'
+                   : 'OK';
+
+      function deltaCell(diff, pct, borderLeft){
+        if(Math.abs(diff)<0.06) return '<td style="text-align:right'+(borderLeft?';border-left:2px solid #e5e7eb':'')+'"></td><td style="text-align:right"></td><td style="text-align:right;color:#9ca3af">—</td>';
+        var cls = diff>0?'pct-up':'pct-down';
+        var arrow = diff>0?'▲':'▼';
+        var pctStr = pct!==0?' <small style="font-size:.68rem">('+pct+'%)</small>':'';
+        return '<td style="text-align:right'+(borderLeft?';border-left:2px solid #e5e7eb':'')+'">'
+          +brl(diff>0?c.liq_ant:c.venc_ant||c.desc_ant||0)+'</td>'  // placeholder — veja abaixo
+          +'<td style="text-align:right"></td>'
+          +'<td style="text-align:right" class="'+cls+'">'+arrow+' '+brl(Math.abs(diff))+pctStr+'</td>';
+      }
+
+      // Células individuais por campo
+      function fieldCells(ant, atu, diff, pct, borderLeft){
+        var diffCls = diff>0?'pct-up':diff<0?'pct-down':'';
+        var arrow = diff>0?'▲':diff<0?'▼':'';
+        var pctStr = Math.abs(pct)>=1?' <small style="font-size:.68rem">('+pct+'%)</small>':'';
+        var diffFmt = Math.abs(diff)<0.06
+          ? '<span style="color:#9ca3af">—</span>'
+          : '<span class="'+diffCls+'">'+arrow+' '+brl(Math.abs(diff))+pctStr+'</span>';
+        return '<td style="text-align:right'+(borderLeft?';border-left:2px solid #e5e7eb':'')+'">'+brl(ant)+'</td>'
+          +'<td style="text-align:right">'+brl(atu)+'</td>'
+          +'<td style="text-align:right">'+diffFmt+'</td>';
+      }
+
+      // Rubricas novas/removidas — tooltip compacto
+      var rbCount = (c.rubricas_novas||[]).length+(c.rubricas_removidas||[]).length;
+      var rbCell = '';
+      if(rbCount){
+        var rbTip = '';
+        (c.rubricas_novas||[]).forEach(function(rb){rbTip+='+ '+rb.rubrica+' ('+brl(rb.valor)+')\n'});
+        (c.rubricas_removidas||[]).forEach(function(rb){rbTip+='- '+rb.rubrica+' ('+brl(rb.valor)+')\n'});
+        rbCell='<td style="text-align:center"><span title="'+rbTip.trim()+'" style="cursor:help;background:#eff6ff;color:#3b82f6;border-radius:20px;padding:.15rem .55rem;font-size:.72rem;font-weight:700">'+rbCount+'</span></td>';
+      } else {
+        rbCell='<td style="text-align:center;color:#9ca3af;font-size:.75rem">—</td>';
+      }
+
+      html+='<tr class="'+rowCls+'">'
+        +'<td style="font-weight:600;font-size:.83rem">'+c.nome+'</td>'
+        +'<td style="text-align:center"><span class="'+badgeCls+'" style="font-size:.68rem">'+badgeTxt+'</span></td>'
+        +fieldCells(c.liq_ant,  c.liq_atu,  c.liq_diff,  c.liq_pct,  true)
+        +fieldCells(c.venc_ant, c.venc_atu, c.venc_diff, c.venc_pct, true)
+        +fieldCells(c.desc_ant, c.desc_atu, c.desc_diff, c.desc_pct, true)
+        +rbCell
+        +'</tr>';
     });
-    html+='</div>';
-  }
-  if(data.rubricas_removidas&&data.rubricas_removidas.length){
-    html+='<div class="card"><div class="sec-title">Rubricas Removidas (nao constam mais)</div>';
-    data.rubricas_removidas.forEach(function(rb){
-      html+='<div style="padding:.3rem .6rem;border-bottom:1px solid #f3f4f6;font-size:.82rem">'
-        +'<strong>'+rb.nome+'</strong> — '+rb.rubrica+' <span style="color:#A72C31;font-weight:600">'+brl(rb.valor)+'</span></div>';
-    });
-    html+='</div>';
+    html+='</tbody></table></div>'
+      +'<p style="font-size:.72rem;color:#9ca3af;margin-top:.6rem">▲ aumento &nbsp;▼ redução &nbsp;·&nbsp; Rubricas: número de verbas novas/removidas (passe o mouse para ver detalhes)</p>'
+      +'</div>';
   }
 
   if(data.erros&&data.erros.length){

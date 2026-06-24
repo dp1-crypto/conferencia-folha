@@ -161,6 +161,20 @@ details summary{font-size:.72rem;color:#6b7280;cursor:pointer;margin-top:.5rem;u
 .tbl-sigma td{padding:.45rem .6rem;border-bottom:1px solid #f9fafb}
 .tbl-sigma tr:hover td{background:#fafafa}
 
+/* ── Tabela comparativa mês anterior ── */
+.tbl-comp{width:100%;border-collapse:collapse;font-size:.8rem;white-space:nowrap}
+.tbl-comp thead tr:first-child th{background:#f8f9fa;color:#374151;font-weight:700;padding:.55rem .6rem;border-bottom:1px solid #e5e7eb;text-align:left}
+.tbl-comp thead tr:last-child th{background:#f8f9fa;color:#9ca3af;font-size:.72rem;padding:.35rem .6rem;border-bottom:2px solid #e5e7eb}
+.tbl-comp td{padding:.5rem .6rem;border-bottom:1px solid #f3f4f6;vertical-align:middle}
+.tbl-comp tbody tr:hover td{background:#fafafa}
+.comp-row-alta td{background:#fff8f8}
+.comp-row-alta:hover td{background:#fff1f2}
+.comp-row-media td{background:#fffef5}
+.comp-row-media:hover td{background:#fffbeb}
+.comp-row-baixa td{background:#f9fffe}
+.comp-row-ok td{background:#fff}
+@media(max-width:900px){.tbl-comp{font-size:.72rem}.tbl-comp td,.tbl-comp th{padding:.35rem .4rem}}
+
 /* ── Export buttons ── */
 .export-bar{display:flex;gap:.5rem;margin-top:1rem;justify-content:center}
 .btn-export{background:#fff;border:1px solid #d1d5db;padding:.45rem 1rem;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;color:#374151;transition:all .15s}

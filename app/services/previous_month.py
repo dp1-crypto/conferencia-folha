@@ -73,82 +73,113 @@ def compare_months(folha_atual: dict, folha_anterior: dict) -> dict:
                 'liquido': emp.get('liquido', 0),
             })
 
-    # Alteracoes nos que estao em ambas
+    # Alteracoes nos que estao em ambas — agrupa por colaborador
+    comparativo = []  # um registro por colaborador, todos os campos lado a lado
+
     for nome_atual, nome_ant in map_atual_para_anterior.items():
-        atual = folha_atual[nome_atual]
+        atual    = folha_atual[nome_atual]
         anterior = folha_anterior[nome_ant]
         nome_exibir = atual.get('nome_original', nome_atual.title())
-        tem_alteracao = False
 
-        for campo, label in [
-            ('liquido', 'Liquido a Receber'),
-            ('total_vencimentos', 'Total Vencimentos'),
-            ('total_descontos', 'Total Descontos'),
-        ]:
-            v_ant = anterior.get(campo, 0) or 0
-            v_atu = atual.get(campo, 0) or 0
-            diff = round(v_atu - v_ant, 2)
+        def _campo(chave):
+            v_ant = anterior.get(chave, 0) or 0
+            v_atu = atual.get(chave, 0) or 0
+            diff  = round(v_atu - v_ant, 2)
+            pct   = round((diff / v_ant * 100), 1) if v_ant else 0
+            return v_ant, v_atu, diff, pct
 
-            if abs(diff) <= TOLERANCIA_DIVERGENCIA:
-                continue
+        liq_ant, liq_atu, liq_diff, liq_pct       = _campo('liquido')
+        venc_ant, venc_atu, venc_diff, venc_pct    = _campo('total_vencimentos')
+        desc_ant, desc_atu, desc_diff, desc_pct    = _campo('total_descontos')
 
-            pct = round((diff / v_ant * 100), 1) if v_ant else 0
+        # Criticidade baseada na variação do líquido (campo mais relevante)
+        tem_diff = (abs(liq_diff) > TOLERANCIA_DIVERGENCIA or
+                    abs(venc_diff) > TOLERANCIA_DIVERGENCIA or
+                    abs(desc_diff) > TOLERANCIA_DIVERGENCIA)
 
-            if abs(pct) > 20 or abs(diff) > 500:
-                criticidade = 'alta'
-                badge_text = 'CRITICO'
-            elif abs(pct) > 5 or abs(diff) > 100:
-                criticidade = 'media'
-                badge_text = 'ATENCAO'
-            else:
-                criticidade = 'baixa'
-                badge_text = 'BAIXO'
+        if not tem_diff:
+            criticidade = 'ok'
+        elif abs(liq_pct) > 20 or abs(liq_diff) > 500:
+            criticidade = 'alta'
+        elif abs(liq_pct) > 5 or abs(liq_diff) > 100:
+            criticidade = 'media'
+        else:
+            criticidade = 'baixa'
 
-            alteracoes.append({
-                'nome': nome_exibir,
-                'campo': label,
-                'valor_anterior': v_ant,
-                'valor_atual': v_atu,
-                'diferenca': diff,
-                'pct_variacao': pct,
-                'criticidade': criticidade,
-                'badge_text': badge_text,
-            })
-            tem_alteracao = True
+        if tem_diff:
+            alteracoes.append({'nome': nome_exibir, 'criticidade': criticidade})
 
         # Compara rubricas
         verbas_atu = {v['descricao'].upper(): v['valor'] for v in atual.get('verbas', [])}
         verbas_ant = {v['descricao'].upper(): v['valor'] for v in anterior.get('verbas', [])}
+        rb_novas     = []
+        rb_removidas = []
 
         for desc, val in verbas_atu.items():
             if desc not in verbas_ant:
+                rb_novas.append({'rubrica': desc.title(), 'valor': val})
                 rubricas_novas.append({'nome': nome_exibir, 'rubrica': desc.title(), 'valor': val})
-                tem_alteracao = True
 
         for desc, val in verbas_ant.items():
             if desc not in verbas_atu:
+                rb_removidas.append({'rubrica': desc.title(), 'valor': val})
                 rubricas_removidas.append({'nome': nome_exibir, 'rubrica': desc.title(), 'valor': val})
-                tem_alteracao = True
 
-        if not tem_alteracao:
+        if not tem_diff and not rb_novas and not rb_removidas:
             sem_alteracao += 1
 
-    total_criticos = sum(1 for a in alteracoes if a['criticidade'] == 'alta')
+        comparativo.append({
+            'nome':          nome_exibir,
+            'criticidade':   criticidade,
+            # Líquido
+            'liq_ant':  liq_ant,
+            'liq_atu':  liq_atu,
+            'liq_diff': liq_diff,
+            'liq_pct':  liq_pct,
+            # Vencimentos
+            'venc_ant':  venc_ant,
+            'venc_atu':  venc_atu,
+            'venc_diff': venc_diff,
+            'venc_pct':  venc_pct,
+            # Descontos
+            'desc_ant':  desc_ant,
+            'desc_atu':  desc_atu,
+            'desc_diff': desc_diff,
+            'desc_pct':  desc_pct,
+            # Rubricas
+            'rubricas_novas':     rb_novas,
+            'rubricas_removidas': rb_removidas,
+        })
+
+    # Ordena: críticos primeiro, depois por nome
+    _ordem = {'alta': 0, 'media': 1, 'baixa': 2, 'ok': 3}
+    comparativo.sort(key=lambda x: (_ordem.get(x['criticidade'], 9), x['nome']))
+
+    total_criticos = sum(1 for c in comparativo if c['criticidade'] == 'alta')
     total_criticos += len(novos) + len(desligados)
+    alterados = sum(1 for c in comparativo if c['criticidade'] != 'ok')
 
     return {
-        'colaboradores_novos': sorted(novos, key=lambda x: x['nome']),
+        'colaboradores_novos':      sorted(novos,      key=lambda x: x['nome']),
         'colaboradores_desligados': sorted(desligados, key=lambda x: x['nome']),
-        'alteracoes': sorted(alteracoes, key=lambda x: (x['criticidade'] != 'alta', x['criticidade'] != 'media', x['nome'])),
-        'rubricas_novas': rubricas_novas,
+        'comparativo':  comparativo,
+        # mantém alteracoes para compatibilidade com exportar_excel
+        'alteracoes': [
+            {'nome': c['nome'], 'campo': 'Liquido a Receber',
+             'valor_anterior': c['liq_ant'], 'valor_atual': c['liq_atu'],
+             'diferenca': c['liq_diff'], 'pct_variacao': c['liq_pct'],
+             'criticidade': c['criticidade'], 'badge_text': c['criticidade'].upper()}
+            for c in comparativo if abs(c['liq_diff']) > TOLERANCIA_DIVERGENCIA
+        ],
+        'rubricas_novas':     rubricas_novas,
         'rubricas_removidas': rubricas_removidas,
         'resumo': {
-            'total_atual': len(folha_atual),
+            'total_atual':    len(folha_atual),
             'total_anterior': len(folha_anterior),
-            'novos': len(novos),
-            'desligados': len(desligados),
-            'alterados': len(set(a['nome'] for a in alteracoes)),
-            'sem_alteracao': sem_alteracao,
+            'novos':          len(novos),
+            'desligados':     len(desligados),
+            'alterados':      alterados,
+            'sem_alteracao':  sem_alteracao,
             'total_criticos': total_criticos,
         }
     }
