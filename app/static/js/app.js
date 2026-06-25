@@ -320,9 +320,12 @@ function _rubricas_subtable(rubricas){
   var divergentes = rubricas.filter(function(r){return r.status!=='ok'});
   var iguais      = rubricas.filter(function(r){return r.status==='ok'});
 
+  var colStyle = 'border-collapse:collapse;width:100%;font-size:.78rem';
+  var thStyle  = 'text-align:{align};padding:.3rem .5rem;font-size:.75rem;color:#6b7280;font-weight:500';
+
   function rbRow(rb){
     var st = rb.status;
-    var bg = st==='novo'?'#f0fdf4':st==='removido'?'#fff1f2':st==='alterado'?'#fffbeb':'';
+    var bg = st==='novo'?'background:#f0fdf4':st==='removido'?'background:#fff1f2':st==='alterado'?'background:#fffbeb':'';
     var badge = st==='novo'
       ? '<span class="rb-badge rb-novo">NOVA</span>'
       : st==='removido'
@@ -333,34 +336,40 @@ function _rubricas_subtable(rubricas){
     var diff = rb.diferenca||0;
     var diffFmt = Math.abs(diff)<0.06
       ? ''
-      : '<span class="'+(diff>0?'pct-up':'pct-down')+'" style="font-size:.75rem">'+(diff>0?'▲':'▼')+' '+brl(Math.abs(diff))+'</span>';
-    return '<tr style="background:'+bg+'">'
-      +'<td style="font-size:.78rem">'+rb.rubrica+'</td>'
-      +'<td style="text-align:right;font-size:.78rem">'+brl(rb.valor_anterior)+'</td>'
-      +'<td style="text-align:right;font-size:.78rem">'+brl(rb.valor_atual)+'</td>'
-      +'<td style="text-align:right;font-size:.78rem">'+diffFmt+'</td>'
-      +'<td style="text-align:center">'+badge+'</td>'
-      +'</tr>';
+      : '<span class="'+(diff>0?'pct-up':'pct-down')+'">'+(diff>0?'▲':'▼')+' '+brl(Math.abs(diff))+'</span>';
+    return '<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:.25rem .6rem;align-items:center;padding:.3rem .4rem;border-bottom:1px solid #f0f0f0;'+bg+'">'
+      +'<span>'+rb.rubrica+'</span>'
+      +'<span style="text-align:right;color:#6b7280">'+brl(rb.valor_anterior)+'</span>'
+      +'<span style="text-align:right">'+brl(rb.valor_atual)+'</span>'
+      +'<span>'+badge+'</span>'
+      +'</div>';
   }
 
-  var hdr = '<table style="width:100%;border-collapse:collapse;margin-top:.5rem">'
-    +'<thead><tr style="background:#f8f9fa">'
-    +'<th style="text-align:left;padding:.3rem .5rem;font-size:.75rem;color:#6b7280;font-weight:500">Rubrica</th>'
-    +'<th style="text-align:right;padding:.3rem .5rem;font-size:.75rem;color:#6b7280;font-weight:500">Anterior</th>'
-    +'<th style="text-align:right;padding:.3rem .5rem;font-size:.75rem;color:#6b7280;font-weight:500">Atual</th>'
-    +'<th style="text-align:right;padding:.3rem .5rem;font-size:.75rem;color:#6b7280;font-weight:500">Δ</th>'
-    +'<th style="text-align:center;padding:.3rem .5rem;font-size:.75rem;color:#6b7280;font-weight:500">Status</th>'
-    +'</tr></thead><tbody>';
+  var hdr = '<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:.25rem .6rem;padding:.3rem .4rem;background:#f8f9fa;border-radius:4px 4px 0 0;margin-top:.5rem">'
+    +'<span style="font-size:.73rem;color:#9ca3af;font-weight:500">Rubrica</span>'
+    +'<span style="font-size:.73rem;color:#9ca3af;font-weight:500;text-align:right">Anterior</span>'
+    +'<span style="font-size:.73rem;color:#9ca3af;font-weight:500;text-align:right">Atual</span>'
+    +'<span style="font-size:.73rem;color:#9ca3af;font-weight:500">Status</span>'
+    +'</div>'
+    +'<div style="border:1px solid #f0f0f0;border-radius:0 0 4px 4px;overflow:hidden">';
 
-  var rows = '';
-  divergentes.forEach(function(rb){rows+=rbRow(rb)});
+  var body = '';
+  divergentes.forEach(function(rb){body+=rbRow(rb)});
+
   if(iguais.length){
-    rows+='<tr><td colspan="5" style="padding:.25rem .5rem">'
-      +'<details><summary style="font-size:.72rem;color:#9ca3af;cursor:pointer">'+iguais.length+' rubrica(s) sem alteração</summary>';
-    iguais.forEach(function(rb){rows+=rbRow(rb)});
-    rows+='</details></td></tr>';
+    body+='<details style="border-top:'+(divergentes.length?'1px solid #e5e7eb':'none')+'">'
+      +'<summary style="font-size:.72rem;color:#9ca3af;cursor:pointer;padding:.35rem .5rem;list-style:none;background:#fafafa">'
+      +'&#9656; '+iguais.length+' rubrica(s) sem alteração</summary>'
+      +'<div>';
+    iguais.forEach(function(rb){body+=rbRow(rb)});
+    body+='</div></details>';
   }
-  return hdr+rows+'</tbody></table>';
+
+  if(!divergentes.length && !iguais.length){
+    body='<p style="font-size:.78rem;color:#9ca3af;padding:.5rem">Nenhuma rubrica encontrada.</p>';
+  }
+
+  return hdr+body+'</div>';
 }
 
 function renderMesAnterior(data){
@@ -628,56 +637,57 @@ function renderImpostos(data){
   }
 
   function verbas_detail_imp(c){
-    // Sub-tabela com todas as verbas do recibo, destacando INSS, IRRF e salário
     var rubricas = c.rubricas_detalhadas||[];
-    if(!rubricas.length) return '<p style="font-size:.78rem;color:#9ca3af;padding:.5rem">Nenhuma rubrica encontrada no recibo.</p>';
 
-    var tipoLabel = {inss:'INSS',irrf:'IRRF',salario:'SALÁRIO',outro:'Outro'};
-    var tipoCor   = {inss:'#fee2e2',irrf:'#eff6ff',salario:'#f0fdf4',outro:''};
+    var tipoCor   = {inss:'background:#fff0f0',irrf:'background:#eff6ff',salario:'background:#f0fdf4',outro:''};
     var tipoBadge = {
       inss:   '<span class="rb-badge" style="background:#fee2e2;color:#991b1b">INSS</span>',
       irrf:   '<span class="rb-badge" style="background:#eff6ff;color:#1d4ed8">IRRF</span>',
       salario:'<span class="rb-badge" style="background:#f0fdf4;color:#166534">SALÁRIO</span>',
-      outro:  '',
+      outro:  '<span style="color:#d1d5db;font-size:.7rem">—</span>',
     };
 
-    // Divergências calculadas vs encontradas
-    var divINSS  = c.inss_status!=='OK'&&c.inss_status!=='SEM_DADOS'&&c.inss_status!=='ARREDONDAMENTO';
-    var divIRRF  = c.irrf_status!=='OK'&&c.irrf_status!=='SEM_DADOS'&&c.irrf_status!=='ARREDONDAMENTO';
+    var divINSS = c.inss_status!=='OK'&&c.inss_status!=='SEM_DADOS'&&c.inss_status!=='ARREDONDAMENTO';
+    var divIRRF = c.irrf_status!=='OK'&&c.irrf_status!=='SEM_DADOS'&&c.irrf_status!=='ARREDONDAMENTO';
 
-    var rows='';
-    // INSS calculado vs encontrado (linha de auditoria)
-    rows+='<tr style="background:#fef3c7;font-weight:600">'
-      +'<td style="font-size:.75rem;color:#92400e">⚖ INSS esperado (calculado)</td>'
-      +'<td style="text-align:right;font-size:.75rem;color:#92400e">'+brl(c.inss_calculado)+'</td>'
-      +'<td colspan="2" style="font-size:.72rem;color:#9ca3af">Base: '+brl(c.base_inss)+' · Tabela progressiva 2024</td>'
-      +'</tr>';
-    rows+='<tr style="background:#fef3c7;font-weight:600">'
-      +'<td style="font-size:.75rem;color:#92400e">⚖ IRRF esperado (calculado)</td>'
-      +'<td style="text-align:right;font-size:.75rem;color:#92400e">'+brl(c.irrf_calculado)+'</td>'
-      +'<td colspan="2" style="font-size:.72rem;color:#9ca3af">Base: '+brl(c.base_irrf)+' · Tolerância R$ 10,00</td>'
-      +'</tr>';
+    // Cabeçalho via grid (sem tabela aninhada)
+    var html='<div style="margin-top:.5rem">'
+      +'<div style="display:grid;grid-template-columns:1fr 90px 70px;gap:.25rem .5rem;padding:.3rem .5rem;background:#f8f9fa;border-radius:4px 4px 0 0">'
+      +'<span style="font-size:.72rem;color:#9ca3af;font-weight:500">Rubrica do recibo</span>'
+      +'<span style="font-size:.72rem;color:#9ca3af;font-weight:500;text-align:right">Valor</span>'
+      +'<span style="font-size:.72rem;color:#9ca3af;font-weight:500">Tipo</span>'
+      +'</div>'
+      +'<div style="border:1px solid #f0f0f0;border-top:none;border-radius:0 0 4px 4px">';
 
-    rubricas.forEach(function(v){
-      var bg=tipoCor[v.tipo]||'';
-      var marcador='';
-      if(v.tipo==='inss'&&divINSS) marcador=' <span style="color:#A72C31;font-weight:700">⚠</span>';
-      if(v.tipo==='irrf'&&divIRRF) marcador=' <span style="color:#A72C31;font-weight:700">⚠</span>';
-      rows+='<tr style="background:'+bg+'">'
-        +'<td style="font-size:.77rem">'+(v.codigo?'<span style="color:#9ca3af;margin-right:.3rem">'+v.codigo+'</span>':'')+v.descricao+marcador+'</td>'
-        +'<td style="text-align:right;font-size:.77rem;font-weight:600">'+brl(v.valor)+'</td>'
-        +'<td>'+tipoBadge[v.tipo]+'</td>'
-        +'<td></td>'
-        +'</tr>';
-    });
+    // Linhas de referência (INSS e IRRF esperados)
+    html+='<div style="display:grid;grid-template-columns:1fr 90px 70px;gap:.25rem .5rem;padding:.35rem .5rem;background:#fef9c3;border-bottom:1px solid #f0f0f0">'
+      +'<span style="font-size:.75rem;color:#92400e;font-weight:600">⚖ INSS esperado (tabela progressiva)</span>'
+      +'<span style="font-size:.75rem;color:#92400e;font-weight:700;text-align:right">'+brl(c.inss_calculado)+'</span>'
+      +'<span style="font-size:.7rem;color:#9ca3af">Base: '+brl(c.base_inss)+'</span>'
+      +'</div>';
+    html+='<div style="display:grid;grid-template-columns:1fr 90px 70px;gap:.25rem .5rem;padding:.35rem .5rem;background:#fef9c3;border-bottom:1px solid #e5e7eb">'
+      +'<span style="font-size:.75rem;color:#92400e;font-weight:600">⚖ IRRF esperado (tolerância R$ 10)</span>'
+      +'<span style="font-size:.75rem;color:#92400e;font-weight:700;text-align:right">'+brl(c.irrf_calculado)+'</span>'
+      +'<span style="font-size:.7rem;color:#9ca3af">Base: '+brl(c.base_irrf)+'</span>'
+      +'</div>';
 
-    return '<table style="width:100%;border-collapse:collapse;margin-top:.5rem">'
-      +'<thead><tr style="background:#f8f9fa">'
-      +'<th style="text-align:left;padding:.3rem .5rem;font-size:.74rem;color:#6b7280;font-weight:500">Rubrica do recibo</th>'
-      +'<th style="text-align:right;padding:.3rem .5rem;font-size:.74rem;color:#6b7280;font-weight:500">Valor</th>'
-      +'<th style="padding:.3rem .5rem;font-size:.74rem;color:#6b7280;font-weight:500">Tipo</th>'
-      +'<th></th>'
-      +'</tr></thead><tbody>'+rows+'</tbody></table>';
+    if(!rubricas.length){
+      html+='<p style="font-size:.78rem;color:#9ca3af;padding:.5rem">Nenhuma rubrica encontrada no recibo.</p>';
+    } else {
+      rubricas.forEach(function(v){
+        var bg = tipoCor[v.tipo]||'';
+        var marcador = (v.tipo==='inss'&&divINSS)||(v.tipo==='irrf'&&divIRRF)
+          ? ' <span style="color:#A72C31;font-weight:700">⚠</span>' : '';
+        html+='<div style="display:grid;grid-template-columns:1fr 90px 70px;gap:.25rem .5rem;padding:.3rem .5rem;border-bottom:1px solid #f5f5f5;'+bg+'">'
+          +'<span style="font-size:.77rem">'+(v.codigo?'<span style="color:#9ca3af;margin-right:.3rem">'+v.codigo+'</span>':'')+v.descricao+marcador+'</span>'
+          +'<span style="font-size:.77rem;font-weight:600;text-align:right">'+brl(v.valor)+'</span>'
+          +'<span>'+tipoBadge[v.tipo||'outro']+'</span>'
+          +'</div>';
+      });
+    }
+
+    html+='</div></div>';
+    return html;
   }
 
   // ── Tabela principal expansível ──────────────────────────────────────────
