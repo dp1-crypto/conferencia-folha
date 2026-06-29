@@ -1,6 +1,6 @@
 /* ── Sigma Contabilidade — Conferencia de Folha — JS ── */
 
-const FILES = {excel:[], pdf:[], word:[], fatura:[], extrato:[], atual:[], anterior:[], 'pdf-impostos':[]};
+const FILES = {excel:[], pdf:[], word:[], fatura:[], extrato:[], anterior:[]};
 
 // Estado global para auditoria consolidada
 const AUDIT_STATE = { folha: null, beneficio: null, mesAnterior: null, impostos: null };
@@ -23,6 +23,8 @@ function sel(type, inp) {
   if(el) el.textContent = names;
   var zone = document.getElementById('zone-'+type);
   if(zone) zone.classList.toggle('done', FILES[type].length>0);
+  updateAllFileStatuses();
+  updateDocSummary();
 }
 
 function toggleEventoCodigo(){
@@ -64,7 +66,7 @@ function undrag(e,t){document.getElementById('zone-'+t).classList.remove('over')
 function drop(e,t){
   e.preventDefault();
   document.getElementById('zone-'+t).classList.remove('over');
-  var inp=document.getElementById('file-'+t) || document.getElementById('inp-'+t);
+  var inp=document.getElementById('file-'+t);
   var dt=new DataTransfer();
   Array.from(e.dataTransfer.files).forEach(function(f){dt.items.add(f)});
   inp.files=dt.files;
@@ -271,14 +273,14 @@ function render(data){
    ═══════════════════════════════════════════ */
 
 async function analisarMesAnterior(){
-  if(!FILES.atual.length || !FILES.anterior.length){alert('Envie a folha atual e a folha do mes anterior (PDF).');return}
+  if(!FILES.pdf.length || !FILES.anterior.length){alert('Envie os Recibos PDF (folha atual) e os Recibos PDF do Mes Anterior na aba Documentos.');return}
   var btn=document.getElementById('btn-anterior');
   btn.disabled=true;
   document.getElementById('loading-anterior').style.display='block';
   document.getElementById('results-anterior').innerHTML='';
 
   var fd=new FormData();
-  FILES.atual.forEach(function(f){fd.append('folha_atual',f)});
+  FILES.pdf.forEach(function(f){fd.append('folha_atual',f)});
   FILES.anterior.forEach(function(f){fd.append('folha_anterior',f)});
 
   try{
@@ -499,14 +501,14 @@ function togDetail(id){
    ═══════════════════════════════════════════ */
 
 async function analisarImpostos(){
-  if(!FILES['pdf-impostos'].length){alert('Envie os recibos em PDF.');return}
+  if(!FILES.pdf.length){alert('Envie os Recibos PDF na aba Documentos.');return}
   var btn=document.getElementById('btn-impostos');
   btn.disabled=true;
   document.getElementById('loading-impostos').style.display='block';
   document.getElementById('results-impostos').innerHTML='';
 
   var fd=new FormData();
-  FILES['pdf-impostos'].forEach(function(f){fd.append('pdf',f)});
+  FILES.pdf.forEach(function(f){fd.append('pdf',f)});
 
   try{
     var res=await fetch('/auditoria-impostos',{method:'POST',body:fd});
@@ -987,6 +989,87 @@ async function exportar(tipo, formato){
 }
 
 /* ═══════════════════════════════════════════
+   STATUS DE ARQUIVOS NAS ABAS DE ANALISE
+   ═══════════════════════════════════════════ */
+
+function _fstatusItem(key, label, optional){
+  var count = FILES[key] ? FILES[key].length : 0;
+  var has = count > 0;
+  if(has){
+    return '<span class="fsi fsi-ok">&#10003; '+label+' <em>('+count+')</em></span>';
+  } else if(optional){
+    return '<span class="fsi fsi-opt">&#9675; '+label+' <em>(opcional)</em></span>';
+  } else {
+    return '<span class="fsi fsi-miss">&#9888; '+label+'</span>';
+  }
+}
+
+function updateAllFileStatuses(){
+  var link = '<button class="fsi-link" onclick="switchTab(\'documentos\')">Ir para Documentos &#x2197;</button>';
+
+  // Folha x Lancamentos: excel OU pdf (pelo menos um)
+  var el1 = document.getElementById('file-status-folha');
+  if(el1){
+    el1.innerHTML = '<div class="fsi-row">'
+      +_fstatusItem('pdf','Recibos PDF',false)
+      +_fstatusItem('excel','Planilha Excel',false)
+      +_fstatusItem('word','Documento Word',true)
+      +link+'</div>'
+      +(FILES.pdf.length===0&&FILES.excel.length===0
+        ?'<p class="fsi-hint">Envie pelo menos os Recibos PDF ou a Planilha Excel.</p>':'');
+  }
+
+  // Mes Anterior: pdf (atual) E anterior
+  var el2 = document.getElementById('file-status-anterior');
+  if(el2){
+    var faltaAnt = FILES.pdf.length===0||FILES.anterior.length===0;
+    el2.innerHTML = '<div class="fsi-row">'
+      +_fstatusItem('pdf','Recibos PDF (folha atual)',false)
+      +_fstatusItem('anterior','Recibos PDF (mes anterior)',false)
+      +link+'</div>'
+      +(faltaAnt?'<p class="fsi-hint">Envie os dois PDFs para comparar os meses.</p>':'');
+  }
+
+  // INSS / IRRF: pdf
+  var el3 = document.getElementById('file-status-impostos');
+  if(el3){
+    el3.innerHTML = '<div class="fsi-row">'
+      +_fstatusItem('pdf','Recibos PDF',false)
+      +link+'</div>'
+      +(FILES.pdf.length===0?'<p class="fsi-hint">Envie os Recibos PDF para auditar INSS e IRRF.</p>':'');
+  }
+
+  // Beneficios: extrato (fatura opcional)
+  var el4 = document.getElementById('file-status-beneficio');
+  if(el4){
+    el4.innerHTML = '<div class="fsi-row">'
+      +_fstatusItem('extrato','Extrato de Folha PDF',false)
+      +_fstatusItem('fatura','Fatura / Referencia',true)
+      +link+'</div>'
+      +(FILES.extrato.length===0?'<p class="fsi-hint">Envie o Extrato de Folha PDF.</p>':'');
+  }
+}
+
+function updateDocSummary(){
+  var el = document.getElementById('doc-summary');
+  if(!el) return;
+  var total = Object.values(FILES).reduce(function(s,a){return s+a.length},0);
+  if(total===0){
+    el.innerHTML='<span style="color:#9ca3af;font-size:.82rem">Nenhum arquivo carregado ainda. Arraste ou clique nas areas acima.</span>';
+    return;
+  }
+  var parts = [];
+  if(FILES.pdf.length)       parts.push('<strong>'+FILES.pdf.length+'</strong> Recibo(s) PDF');
+  if(FILES.excel.length)     parts.push('<strong>'+FILES.excel.length+'</strong> Excel');
+  if(FILES.word.length)      parts.push('<strong>'+FILES.word.length+'</strong> Word');
+  if(FILES.anterior.length)  parts.push('<strong>'+FILES.anterior.length+'</strong> PDF (mes anterior)');
+  if(FILES.fatura.length)    parts.push('<strong>'+FILES.fatura.length+'</strong> Fatura');
+  if(FILES.extrato.length)   parts.push('<strong>'+FILES.extrato.length+'</strong> Extrato');
+  el.innerHTML='<span class="doc-summary-ok">&#10003; Carregado: '+parts.join(' &middot; ')+'</span>'
+    +'<span style="font-size:.75rem;color:#6b7280;margin-left:.8rem">Use as abas de analise para processar</span>';
+}
+
+/* ═══════════════════════════════════════════
    UTILIDADES
    ═══════════════════════════════════════════ */
 
@@ -1057,3 +1140,9 @@ function saveDiv(btn, nomeFunc){
   form.classList.remove('open');
   addBtn.textContent = '+ Apontar divergencia manual';
 }
+
+// Inicializa status ao carregar a pagina
+document.addEventListener('DOMContentLoaded', function(){
+  updateAllFileStatuses();
+  updateDocSummary();
+});

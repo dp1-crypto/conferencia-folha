@@ -29,7 +29,8 @@
 
   <!-- TABS -->
   <div class="tabs no-print">
-    <button class="tab active" onclick="switchTab('folha')">Folha x Lancamentos</button>
+    <button class="tab active" onclick="switchTab('documentos')">Documentos</button>
+    <button class="tab" onclick="switchTab('folha')">Folha x Lancamentos</button>
     <button class="tab" onclick="switchTab('anterior')">Mes Anterior</button>
     <button class="tab" onclick="switchTab('impostos')">INSS / IRRF</button>
     <button class="tab" onclick="switchTab('beneficio')">Beneficios</button>
@@ -38,40 +39,109 @@
   </div>
 
   <!-- ═══════════════════════════════════════════
-       ABA 1: CONFERENCIA DE FOLHA
+       ABA DOCUMENTOS — upload centralizado
        ═══════════════════════════════════════════ -->
-  <div class="section active" id="section-folha">
+  <div class="section active" id="section-documentos">
 
     <div class="card">
-      <h2>Envie os arquivos da folha</h2>
-      <p>Selecione ou arraste os arquivos abaixo. O sistema compara a planilha, os recibos e o documento de instrucoes e aponta todas as divergencias.</p>
+      <h2>Documentos</h2>
+      <p>Envie todos os arquivos aqui. As abas de analise usam automaticamente os documentos carregados — sem precisar reenviar.</p>
 
-      <div class="file-grid">
-        <div class="zone" id="zone-excel" ondragover="drag(event,'excel')" ondragleave="undrag(event,'excel')" ondrop="drop(event,'excel')">
-          <input type="file" id="file-excel" accept=".xls,.xlsx" multiple onchange="sel('excel',this)">
-          <div class="icon">&#x1F4CA;</div>
-          <div class="lbl">Planilha Excel</div>
-          <div class="hint">.xls ou .xlsx -- pode selecionar varios</div>
-          <div class="fname" id="fname-excel"></div>
+      <!-- GRUPO 1: Folha de Pagamento -->
+      <div class="doc-group">
+        <div class="doc-group-header">
+          <span class="doc-group-icon">&#x1F4CB;</span>
+          <span class="doc-group-title-text">Folha de Pagamento</span>
+          <span class="doc-group-used">Usado em: Folha x Lancamentos &middot; INSS / IRRF &middot; Mes Anterior (folha atual)</span>
         </div>
+        <div class="file-grid">
+          <div class="zone" id="zone-excel" ondragover="drag(event,'excel')" ondragleave="undrag(event,'excel')" ondrop="drop(event,'excel')">
+            <input type="file" id="file-excel" accept=".xls,.xlsx" multiple onchange="sel('excel',this)">
+            <div class="icon">&#x1F4CA;</div>
+            <div class="lbl">Planilha Excel</div>
+            <div class="hint">.xls ou .xlsx &mdash; pode selecionar varios</div>
+            <div class="fname" id="fname-excel"></div>
+          </div>
 
-        <div class="zone" id="zone-pdf" ondragover="drag(event,'pdf')" ondragleave="undrag(event,'pdf')" ondrop="drop(event,'pdf')">
-          <input type="file" id="file-pdf" accept=".pdf" multiple onchange="sel('pdf',this)">
-          <div class="icon">&#x1F4C4;</div>
-          <div class="lbl">Recibos PDF</div>
-          <div class="hint">.pdf -- pode selecionar varios</div>
-          <div class="fname" id="fname-pdf"></div>
-        </div>
+          <div class="zone" id="zone-pdf" ondragover="drag(event,'pdf')" ondragleave="undrag(event,'pdf')" ondrop="drop(event,'pdf')">
+            <input type="file" id="file-pdf" accept=".pdf" multiple onchange="sel('pdf',this)">
+            <div class="icon">&#x1F4C4;</div>
+            <div class="lbl">Recibos PDF</div>
+            <div class="hint">.pdf &mdash; pode selecionar varios</div>
+            <div class="fname" id="fname-pdf"></div>
+          </div>
 
-        <div class="zone" id="zone-word" ondragover="drag(event,'word')" ondragleave="undrag(event,'word')" ondrop="drop(event,'word')">
-          <input type="file" id="file-word" accept=".docx,.doc" multiple onchange="sel('word',this)">
-          <div class="icon">&#x1F4DD;</div>
-          <div class="lbl">Documento Word <span class="opt-badge">(opcional)</span></div>
-          <div class="hint">.docx -- pode selecionar varios</div>
-          <div class="fname" id="fname-word"></div>
+          <div class="zone" id="zone-word" ondragover="drag(event,'word')" ondragleave="undrag(event,'word')" ondrop="drop(event,'word')">
+            <input type="file" id="file-word" accept=".docx,.doc" multiple onchange="sel('word',this)">
+            <div class="icon">&#x1F4DD;</div>
+            <div class="lbl">Documento Word <span class="opt-badge">(opcional)</span></div>
+            <div class="hint">.docx &mdash; pode selecionar varios</div>
+            <div class="fname" id="fname-word"></div>
+          </div>
         </div>
       </div>
 
+      <!-- GRUPO 2: Mes Anterior -->
+      <div class="doc-group">
+        <div class="doc-group-header">
+          <span class="doc-group-icon">&#x1F4C5;</span>
+          <span class="doc-group-title-text">Comparacao com Mes Anterior</span>
+          <span class="doc-group-used">Usado em: Mes Anterior &mdash; os Recibos PDF acima sao a folha atual</span>
+        </div>
+        <div class="file-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,360px))">
+          <div class="zone" id="zone-anterior" ondragover="drag(event,'anterior')" ondragleave="undrag(event,'anterior')" ondrop="drop(event,'anterior')">
+            <input type="file" id="file-anterior" accept=".pdf" multiple onchange="sel('anterior',this)">
+            <div class="icon">&#x1F4C5;</div>
+            <div class="lbl">Recibos PDF &mdash; Mes Anterior</div>
+            <div class="hint">.pdf &mdash; pode selecionar varios</div>
+            <div class="fname" id="fname-anterior"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRUPO 3: Beneficios -->
+      <div class="doc-group" style="border-bottom:none;margin-bottom:0;padding-bottom:0">
+        <div class="doc-group-header">
+          <span class="doc-group-icon">&#x1F3E5;</span>
+          <span class="doc-group-title-text">Beneficios</span>
+          <span class="doc-group-used">Usado em: Beneficios</span>
+        </div>
+        <div class="file-grid">
+          <div class="zone" id="zone-fatura" ondragover="drag(event,'fatura')" ondragleave="undrag(event,'fatura')" ondrop="drop(event,'fatura')" style="position:relative">
+            <input type="file" id="file-fatura" accept=".pdf,.xls,.xlsx" multiple onchange="sel('fatura',this)">
+            <div class="icon">&#x1F4C1;</div>
+            <div class="lbl">Fatura / Referencia <span class="opt-badge">(opcional)</span></div>
+            <div class="hint">.pdf ou .xlsx &mdash; pode selecionar varios</div>
+            <div class="fname" id="fname-fatura"></div>
+          </div>
+
+          <div class="zone" id="zone-extrato" ondragover="drag(event,'extrato')" ondragleave="undrag(event,'extrato')" ondrop="drop(event,'extrato')">
+            <input type="file" id="file-extrato" accept=".pdf" multiple onchange="sel('extrato',this)">
+            <div class="icon">&#x1F4CB;</div>
+            <div class="lbl">Extrato de Folha PDF</div>
+            <div class="hint">.pdf &mdash; pode selecionar varios</div>
+            <div class="fname" id="fname-extrato"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumo de arquivos carregados -->
+    <div id="doc-summary" class="doc-summary-bar">
+      <span style="color:#9ca3af;font-size:.82rem">Nenhum arquivo carregado ainda. Arraste ou clique nas areas acima.</span>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       ABA 2: CONFERENCIA DE FOLHA
+       ═══════════════════════════════════════════ -->
+  <div class="section" id="section-folha">
+
+    <div class="card">
+      <h2>Conferencia Folha x Lancamentos</h2>
+      <p>Compara planilha, recibos e documento de instrucoes e aponta todas as divergencias.</p>
+      <div id="file-status-folha" class="fstatus-bar"></div>
       <button class="btn" id="btn" onclick="analyze()">Analisar Folha</button>
     </div>
 
@@ -85,28 +155,13 @@
   </div>
 
   <!-- ═══════════════════════════════════════════
-       ABA 2: MES ANTERIOR
+       ABA 3: MES ANTERIOR
        ═══════════════════════════════════════════ -->
   <div id="section-anterior" class="section">
     <div class="card">
       <h2>Conferencia Folha Atual x Mes Anterior</h2>
       <p>Detecta colaboradores novos, desligados e alteracoes salariais significativas.</p>
-      <div class="file-grid">
-        <div class="zone" id="zone-atual" ondragover="drag(event,'atual')" ondragleave="undrag(event,'atual')" ondrop="drop(event,'atual')">
-          <input type="file" id="inp-atual" accept=".pdf" multiple onchange="sel('atual',this)">
-          <div class="icon">&#x1F4C4;</div>
-          <div class="lbl">Folha Atual (PDF)</div>
-          <div class="hint">Recibos do mes atual</div>
-          <div class="fname" id="fname-atual"></div>
-        </div>
-        <div class="zone" id="zone-anterior" ondragover="drag(event,'anterior')" ondragleave="undrag(event,'anterior')" ondrop="drop(event,'anterior')">
-          <input type="file" id="inp-anterior" accept=".pdf" multiple onchange="sel('anterior',this)">
-          <div class="icon">&#x1F4C5;</div>
-          <div class="lbl">Mes Anterior (PDF)</div>
-          <div class="hint">Recibos do mes anterior</div>
-          <div class="fname" id="fname-anterior"></div>
-        </div>
-      </div>
+      <div id="file-status-anterior" class="fstatus-bar"></div>
       <button class="btn" id="btn-anterior" onclick="analisarMesAnterior()">Comparar Folhas</button>
     </div>
     <div id="loading-anterior" class="loading"><div class="spinner"></div><p style="color:#6b7280;font-size:.88rem">Comparando folhas...</p></div>
@@ -114,21 +169,13 @@
   </div>
 
   <!-- ═══════════════════════════════════════════
-       ABA 3: INSS / IRRF
+       ABA 4: INSS / IRRF
        ═══════════════════════════════════════════ -->
   <div id="section-impostos" class="section">
     <div class="card">
       <h2>Auditoria de INSS e IRRF</h2>
       <p>Confere calculos de INSS (tabela progressiva 2024) e IRRF na folha.</p>
-      <div class="file-grid">
-        <div class="zone" id="zone-pdf-impostos" ondragover="drag(event,'pdf-impostos')" ondragleave="undrag(event,'pdf-impostos')" ondrop="drop(event,'pdf-impostos')">
-          <input type="file" id="inp-pdf-impostos" accept=".pdf" multiple onchange="sel('pdf-impostos',this)">
-          <div class="icon">&#x1F9FE;</div>
-          <div class="lbl">Recibos PDF</div>
-          <div class="hint">Holerites para auditoria</div>
-          <div class="fname" id="fname-pdf-impostos"></div>
-        </div>
-      </div>
+      <div id="file-status-impostos" class="fstatus-bar"></div>
       <button class="btn" id="btn-impostos" onclick="analisarImpostos()">Auditar Impostos</button>
     </div>
     <div id="loading-impostos" class="loading"><div class="spinner"></div><p style="color:#6b7280;font-size:.88rem">Auditando impostos...</p></div>
@@ -136,37 +183,22 @@
   </div>
 
   <!-- ═══════════════════════════════════════════
-       ABA 4: BENEFICIOS
+       ABA 5: BENEFICIOS
        ═══════════════════════════════════════════ -->
   <div class="section" id="section-beneficio">
 
     <div class="card no-print">
       <h2>Conferencia de Beneficio</h2>
-      <p>Compare o valor esperado de um beneficio com o que foi descontado na folha de pagamento. Funciona com qualquer tipo de desconto: plano de saude, vale alimentacao, emprestimo, etc.</p>
+      <p>Compare o valor esperado de um beneficio com o que foi descontado na folha de pagamento.</p>
 
-      <div class="file-grid">
-        <div class="zone" id="zone-fatura" ondragover="drag(event,'fatura')" ondragleave="undrag(event,'fatura')" ondrop="drop(event,'fatura')" style="position:relative">
-          <input type="file" id="file-fatura" accept=".pdf,.xls,.xlsx" multiple onchange="sel('fatura',this)">
-          <div class="icon">&#x1F4C1;</div>
-          <div class="lbl">Documento(s) de referencia <span class="opt-badge">(opcional)</span></div>
-          <div class="hint">.pdf -- fatura, relatorio, lista de valores -- pode selecionar varios</div>
-          <div class="fname" id="fname-fatura"></div>
-        </div>
+      <div id="file-status-beneficio" class="fstatus-bar"></div>
 
-        <div style="display:flex;flex-direction:column;justify-content:center;gap:.5rem;padding:.5rem 0">
-          <label style="font-size:.75rem;font-weight:600;color:#374151">Palavra-chave do documento PDF</label>
-          <input type="text" id="filtro-linha" value="MENSALIDADE" placeholder="Ex: MENSALIDADE"
-            style="font-size:.82rem;padding:.42rem .6rem;border:1px solid #d1d5db;border-radius:6px;width:100%;text-transform:uppercase">
-          <div style="font-size:.7rem;color:#9ca3af">Palavra que identifica linhas de valor no PDF (padrao: MENSALIDADE)</div>
-        </div>
-
-        <div class="zone" id="zone-extrato" ondragover="drag(event,'extrato')" ondragleave="undrag(event,'extrato')" ondrop="drop(event,'extrato')">
-          <input type="file" id="file-extrato" accept=".pdf" multiple onchange="sel('extrato',this)">
-          <div class="icon">&#x1F4CB;</div>
-          <div class="lbl">Extrato de Folha PDF</div>
-          <div class="hint">.pdf -- pode selecionar varios</div>
-          <div class="fname" id="fname-extrato"></div>
-        </div>
+      <!-- Palavra-chave do PDF -->
+      <div style="margin-bottom:1rem">
+        <label style="font-size:.75rem;font-weight:600;color:#374151;display:block;margin-bottom:.3rem">Palavra-chave do documento PDF de referencia</label>
+        <input type="text" id="filtro-linha" value="MENSALIDADE" placeholder="Ex: MENSALIDADE"
+          style="font-size:.82rem;padding:.42rem .6rem;border:1px solid #d1d5db;border-radius:6px;width:260px;text-transform:uppercase">
+        <div style="font-size:.7rem;color:#9ca3af;margin-top:.3rem">Palavra que identifica linhas de valor no PDF (padrao: MENSALIDADE)</div>
       </div>
 
       <!-- Evento a analisar -->
@@ -176,12 +208,12 @@
           <div>
             <label style="font-size:.75rem;font-weight:600;color:#374151;display:block;margin-bottom:.3rem">Evento</label>
             <select id="evento-select" onchange="toggleEventoCodigo()" style="width:100%;font-size:.82rem;padding:.42rem .6rem;border:1px solid #d1d5db;border-radius:6px;background:#fff">
-              <option value="8111">8111 -- Plano de Saude</option>
-              <option value="246">246 -- Plano Odontologico</option>
-              <option value="48">48 -- Vale Transporte</option>
-              <option value="203">203 -- Alimentacao</option>
-              <option value="998">998 -- INSS</option>
-              <option value="999">999 -- IRRF / Imposto de Renda</option>
+              <option value="8111">8111 &mdash; Plano de Saude</option>
+              <option value="246">246 &mdash; Plano Odontologico</option>
+              <option value="48">48 &mdash; Vale Transporte</option>
+              <option value="203">203 &mdash; Alimentacao</option>
+              <option value="998">998 &mdash; INSS</option>
+              <option value="999">999 &mdash; IRRF / Imposto de Renda</option>
               <option value="custom">Outro (digitar codigo)</option>
             </select>
           </div>
@@ -229,7 +261,7 @@
   </div>
 
   <!-- ═══════════════════════════════════════════
-       ABA 5: AUDITORIA CONSOLIDADA
+       ABA 6: AUDITORIA CONSOLIDADA
        ═══════════════════════════════════════════ -->
   <div id="section-auditoria" class="section">
     <div class="card">
@@ -242,7 +274,7 @@
   </div>
 
   <!-- ═══════════════════════════════════════════
-       ABA 6: CONFIGURACOES
+       ABA 7: CONFIGURACOES
        ═══════════════════════════════════════════ -->
   <div id="section-config" class="section">
     <div class="card">
