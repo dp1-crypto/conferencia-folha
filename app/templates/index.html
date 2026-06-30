@@ -57,26 +57,32 @@
         <div class="file-grid">
           <div class="zone" id="zone-excel" ondragover="drag(event,'excel')" ondragleave="undrag(event,'excel')" ondrop="drop(event,'excel')">
             <input type="file" id="file-excel" accept=".xls,.xlsx" multiple onchange="sel('excel',this)">
-            <div class="icon">&#x1F4CA;</div>
-            <div class="lbl">Planilha Excel</div>
-            <div class="hint">.xls ou .xlsx &mdash; pode selecionar varios</div>
-            <div class="fname" id="fname-excel"></div>
+            <div class="icon-wrap">&#x1F4CA;</div>
+            <div>
+              <div class="lbl">Planilha Excel</div>
+              <div class="hint">.xls, .xlsx</div>
+              <div class="fname" id="fname-excel"></div>
+            </div>
           </div>
 
           <div class="zone" id="zone-pdf" ondragover="drag(event,'pdf')" ondragleave="undrag(event,'pdf')" ondrop="drop(event,'pdf')">
             <input type="file" id="file-pdf" accept=".pdf" multiple onchange="sel('pdf',this)">
-            <div class="icon">&#x1F4C4;</div>
-            <div class="lbl">Recibos PDF</div>
-            <div class="hint">.pdf &mdash; pode selecionar varios</div>
-            <div class="fname" id="fname-pdf"></div>
+            <div class="icon-wrap">&#x1F4C4;</div>
+            <div>
+              <div class="lbl">Recibos PDF</div>
+              <div class="hint">.pdf &mdash; varios</div>
+              <div class="fname" id="fname-pdf"></div>
+            </div>
           </div>
 
           <div class="zone" id="zone-word" ondragover="drag(event,'word')" ondragleave="undrag(event,'word')" ondrop="drop(event,'word')">
             <input type="file" id="file-word" accept=".docx,.doc" multiple onchange="sel('word',this)">
-            <div class="icon">&#x1F4DD;</div>
-            <div class="lbl">Documento Word <span class="opt-badge">(opcional)</span></div>
-            <div class="hint">.docx &mdash; pode selecionar varios</div>
-            <div class="fname" id="fname-word"></div>
+            <div class="icon-wrap">&#x1F4DD;</div>
+            <div>
+              <div class="lbl">Documento Word <span class="opt-badge">opcional</span></div>
+              <div class="hint">.docx</div>
+              <div class="fname" id="fname-word"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -88,13 +94,15 @@
           <span class="doc-group-title-text">Comparacao com Mes Anterior</span>
           <span class="doc-group-used">Usado em: Mes Anterior &mdash; os Recibos PDF acima sao a folha atual</span>
         </div>
-        <div class="file-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,360px))">
+        <div class="file-grid">
           <div class="zone" id="zone-anterior" ondragover="drag(event,'anterior')" ondragleave="undrag(event,'anterior')" ondrop="drop(event,'anterior')">
             <input type="file" id="file-anterior" accept=".pdf" multiple onchange="sel('anterior',this)">
-            <div class="icon">&#x1F4C5;</div>
-            <div class="lbl">Recibos PDF &mdash; Mes Anterior</div>
-            <div class="hint">.pdf &mdash; pode selecionar varios</div>
-            <div class="fname" id="fname-anterior"></div>
+            <div class="icon-wrap">&#x1F4C5;</div>
+            <div>
+              <div class="lbl">Recibos PDF &mdash; Mes Anterior</div>
+              <div class="hint">.pdf &mdash; varios</div>
+              <div class="fname" id="fname-anterior"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -107,20 +115,24 @@
           <span class="doc-group-used">Usado em: Beneficios</span>
         </div>
         <div class="file-grid">
-          <div class="zone" id="zone-fatura" ondragover="drag(event,'fatura')" ondragleave="undrag(event,'fatura')" ondrop="drop(event,'fatura')" style="position:relative">
+          <div class="zone" id="zone-fatura" ondragover="drag(event,'fatura')" ondragleave="undrag(event,'fatura')" ondrop="drop(event,'fatura')">
             <input type="file" id="file-fatura" accept=".pdf,.xls,.xlsx" multiple onchange="sel('fatura',this)">
-            <div class="icon">&#x1F4C1;</div>
-            <div class="lbl">Fatura / Referencia <span class="opt-badge">(opcional)</span></div>
-            <div class="hint">.pdf ou .xlsx &mdash; pode selecionar varios</div>
-            <div class="fname" id="fname-fatura"></div>
+            <div class="icon-wrap">&#x1F4C1;</div>
+            <div>
+              <div class="lbl">Fatura / Referencia <span class="opt-badge">opcional</span></div>
+              <div class="hint">.pdf, .xlsx</div>
+              <div class="fname" id="fname-fatura"></div>
+            </div>
           </div>
 
           <div class="zone" id="zone-extrato" ondragover="drag(event,'extrato')" ondragleave="undrag(event,'extrato')" ondrop="drop(event,'extrato')">
             <input type="file" id="file-extrato" accept=".pdf" multiple onchange="sel('extrato',this)">
-            <div class="icon">&#x1F4CB;</div>
-            <div class="lbl">Extrato de Folha PDF</div>
-            <div class="hint">.pdf &mdash; pode selecionar varios</div>
-            <div class="fname" id="fname-extrato"></div>
+            <div class="icon-wrap">&#x1F4CB;</div>
+            <div>
+              <div class="lbl">Extrato de Folha PDF</div>
+              <div class="hint">.pdf &mdash; varios</div>
+              <div class="fname" id="fname-extrato"></div>
+            </div>
           </div>
         </div>
       </div>
