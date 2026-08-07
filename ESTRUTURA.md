@@ -166,7 +166,16 @@ diferentes na mesma análise faz códigos colidirem.
 - **VPS:** `ssh -i ~/.ssh/id_sigma_vps -p 22022 root@129.121.54.101`
 - **Código na VPS:** `/root/conferencia-folha/`
 - **Serviço:** `systemd` → `conferencia-folha` (porta 5096 → Traefik → HTTPS)
-- **Deploy:** `cd /root/conferencia-folha && git pull && systemctl restart conferencia-folha`
+- **Deploy:** `cd /root/conferencia-folha && git pull && pip3 install -r requirements.txt && systemctl restart conferencia-folha`
+
+> ⚠️ **O gunicorn precisa rodar com `--workers 1 --threads 8`.**
+> A aba Implantação guarda a análise em memória para os botões de exportação
+> reaproveitarem sem reprocessar os PDFs (assim nada de folha vai para o disco).
+> Com 2 workers, o export cai no processo que não tem a análise e devolve 400.
+> O `--timeout 300` também é necessário: analisar 12 meses de uma folha grande
+> passa fácil dos 30s padrão e o worker seria morto no meio.
+>
+> `ExecStart=/usr/local/bin/gunicorn -b 0.0.0.0:5096 run:app --workers 1 --threads 8 --timeout 300`
 - **GitHub:** https://github.com/dp1-crypto/conferencia-folha
 
 ---
