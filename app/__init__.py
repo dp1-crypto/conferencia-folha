@@ -10,12 +10,14 @@ def create_app():
     from app.routes.benefits import benefits_bp
     from app.routes.audit import audit_bp
     from app.routes.export_routes import export_bp
+    from app.routes.implantacao_routes import implantacao_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(payroll_bp)
     app.register_blueprint(benefits_bp)
     app.register_blueprint(audit_bp)
     app.register_blueprint(export_bp)
+    app.register_blueprint(implantacao_bp)
 
     return app
 

@@ -74,8 +74,10 @@ class TestNormalizeRubric(unittest.TestCase):
                 self.assertEqual(normalize_rubric(v), "PLANO_SAUDE")
 
     def test_rubrica_desconhecida_retorna_normalizada(self):
-        result = normalize_rubric("SALARIO BASE")
-        self.assertEqual(result, "SALARIO BASE")
+        # 'SALARIO BASE' virou variante do grupo SALARIO no dicionario v2.0;
+        # aqui o que se testa e o fallback, entao usa rubrica realmente ausente.
+        result = normalize_rubric("Verba Interna XPTO")
+        self.assertEqual(result, "VERBA INTERNA XPTO")
 
     def test_remove_codigo_numerico_inicial(self):
         self.assertEqual(normalize_rubric("8781 SALARIO"), "SALARIO")
@@ -321,7 +323,9 @@ class TestJsonRubricas(unittest.TestCase):
         for grupo, meta in RUBRIC_META.items():
             self.assertIn("descricao", meta, f"{grupo}: campo 'descricao' ausente")
             self.assertIn("tipo", meta,      f"{grupo}: campo 'tipo' ausente")
-            self.assertIn(meta["tipo"], ("provento", "desconto"),
+            # 'informativo' cobre rubricas que aparecem no holerite mas não são
+            # nem provento nem desconto do empregado (FGTS, afastamento INSS).
+            self.assertIn(meta["tipo"], ("provento", "desconto", "informativo"),
                           f"{grupo}: tipo inválido '{meta['tipo']}'")
 
     def test_premio_ppr_no_grupo(self):

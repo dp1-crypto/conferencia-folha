@@ -1,15 +1,16 @@
 {
   "_meta": {
-    "versao": "1.1",
+    "versao": "2.0",
     "descricao": "Equivalências de rubricas — Sigma Contabilidade",
     "instrucoes": [
       "Adicione novas variações de nomes nas listas 'variantes' conforme aparecerem nos documentos.",
       "Use MAIÚSCULAS SEM ACENTOS — o sistema normaliza automaticamente.",
       "Não remova variantes existentes sem verificar impacto nos relatórios.",
       "O campo 'tipo' define se é provento (+) ou desconto (-) para fins de conferência.",
-      "Ao receber sugestão de nova equivalência na interface, adicione aqui e reinicie o app."
+      "Ao receber sugestão de nova equivalência na interface, adicione aqui e reinicie o app.",
+      "codigo_destino: codigo da rubrica equivalente no sistema da Sigma (Dominio). Preencha uma vez pela aba Configuracoes — o mapa de importacao usa esse campo."
     ],
-    "ultimo_update": "2026-05-08"
+    "ultimo_update": "2026-08-07"
   },
   "grupos": {
     "COMISSAO": {
@@ -28,7 +29,9 @@
         "COMISSAO VENDAS",
         "COMISSAO DIRETORES",
         "COMISSAO GERENTE"
-      ]
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
     },
     "DSR": {
       "descricao": "Descanso / Repouso Semanal Remunerado",
@@ -52,7 +55,9 @@
         "RSR",
         "RSR SOBRE COMISSAO",
         "REPOUSO SEMANAL"
-      ]
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
     },
     "COMISSAO_E_DSR": {
       "descricao": "Comissão e DSR agrupados em um único lançamento",
@@ -65,7 +70,9 @@
         "COMISSOES + DSR",
         "COMISSAO E REPOUSO",
         "COMISSAO E RSR"
-      ]
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
     },
     "VALE_TRANSPORTE": {
       "descricao": "Vale Transporte",
@@ -82,7 +89,9 @@
         "AUXILIO TRANSPORTE",
         "BENEFICIO TRANSPORTE",
         "DESCONTO TRANSPORTE"
-      ]
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
     },
     "VALE_ALIMENTACAO": {
       "descricao": "Vale Alimentação",
@@ -100,7 +109,9 @@
         "AUXILIO ALIMENTACAO",
         "BENEFICIO ALIMENTACAO",
         "VALE ALIMENTACAO DESCONTO"
-      ]
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
     },
     "VALE_REFEICAO": {
       "descricao": "Vale Refeição",
@@ -117,7 +128,9 @@
         "D VR",
         "AUXILIO REFEICAO",
         "TICKET RESTAURANTE"
-      ]
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
     },
     "PLANO_SAUDE": {
       "descricao": "Plano de Saúde / Convênio Médico",
@@ -138,7 +151,9 @@
         "SAUDE",
         "DESCONTO PLANO SAUDE",
         "DESC PLANO SAUDE"
-      ]
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
     },
     "ODONTO": {
       "descricao": "Plano Odontológico",
@@ -157,7 +172,9 @@
         "DESCONTO ODONTO",
         "DESC ODONTO",
         "PLANO DENTAL"
-      ]
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
     },
     "ADIANTAMENTO": {
       "descricao": "Adiantamento Salarial",
@@ -171,7 +188,9 @@
         "ADTO SALARIAL",
         "ADTO",
         "1 PARCELA SALARIO"
-      ]
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
     },
     "PREMIO": {
       "descricao": "Prêmio / Bônus / PPR / PLR / Gratificação de desempenho",
@@ -199,7 +218,9 @@
         "PREMIO ASSIDUIDADE",
         "INCENTIVO",
         "BONUS ANUAL"
-      ]
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
     },
     "HORA_EXTRA": {
       "descricao": "Hora Extra",
@@ -217,7 +238,9 @@
         "EXTRA",
         "HORA EXTRA 50 PORCENTO",
         "HORA EXTRA 100 PORCENTO"
-      ]
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
     },
     "DESCONTO_INDEVIDO": {
       "descricao": "Desconto não autorizado, indevido ou a ser estornado",
@@ -229,7 +252,9 @@
         "DESCONTO NAO AUTORIZADO",
         "ESTORNO DESCONTO",
         "DESCONTO INCORRETO"
-      ]
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
     },
     "ADICIONAL_NOTURNO": {
       "descricao": "Adicional Noturno",
@@ -240,7 +265,9 @@
         "ADIC NOTURNO",
         "ADD NOTURNO",
         "HORA NOTURNA"
-      ]
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
     },
     "INSALUBRIDADE": {
       "descricao": "Adicional de Insalubridade",
@@ -250,7 +277,9 @@
         "ADICIONAL INSALUBRIDADE",
         "ADIC INSALUBRIDADE",
         "ADD INSALUBRIDADE"
-      ]
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
     },
     "PERICULOSIDADE": {
       "descricao": "Adicional de Periculosidade",
@@ -260,7 +289,437 @@
         "ADICIONAL PERICULOSIDADE",
         "ADIC PERICULOSIDADE",
         "ADD PERICULOSIDADE"
-      ]
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "SALARIO": {
+      "descricao": "Salario base / contratual",
+      "tipo": "provento",
+      "variantes": [
+        "SALARIO",
+        "SALARIO BASE",
+        "SALARIO CONTRATUAL",
+        "SALARIO NOMINAL",
+        "SALARIO MENSAL",
+        "SAL BASE",
+        "SALARIO MES",
+        "DIAS NORMAIS",
+        "DIAS TRABALHADOS",
+        "HORAS NORMAIS",
+        "SALARIO NORMAL",
+        "ORDENADO",
+        "VENCIMENTO BASE",
+        "REMUNERACAO MENSAL",
+        "SALARIO FIXO"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "INSS": {
+      "descricao": "INSS retido do segurado",
+      "tipo": "desconto",
+      "variantes": [
+        "INSS",
+        "I N S S",
+        "INSS SOBRE SALARIO",
+        "CONTRIBUICAO INSS",
+        "INSS FOLHA",
+        "PREVIDENCIA SOCIAL",
+        "CONTRIBUICAO PREVIDENCIARIA",
+        "INSS SEGURADO",
+        "DESCONTO INSS",
+        "INSS RETIDO",
+        "INSS 13 SALARIO",
+        "INSS FERIAS",
+        "I N S S SOBRE SALARIO",
+        "PREV SOCIAL"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "IRRF": {
+      "descricao": "Imposto de Renda Retido na Fonte",
+      "tipo": "desconto",
+      "variantes": [
+        "IRRF",
+        "I R R F",
+        "IRF",
+        "IMPOSTO DE RENDA",
+        "IMPOSTO RENDA RETIDO",
+        "IRRF SOBRE SALARIO",
+        "IRRF FOLHA",
+        "IRPF",
+        "IR RETIDO NA FONTE",
+        "DESCONTO IRRF",
+        "IRRF 13 SALARIO",
+        "IRRF FERIAS",
+        "IMPOSTO DE RENDA RETIDO NA FONTE"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "FGTS": {
+      "descricao": "FGTS do mes (informativo, nao desconta do empregado)",
+      "tipo": "informativo",
+      "variantes": [
+        "FGTS",
+        "F G T S",
+        "FGTS DO MES",
+        "FGTS MES",
+        "VALOR FGTS",
+        "DEPOSITO FGTS",
+        "FGTS RECOLHIDO",
+        "BASE FGTS",
+        "FGTS 13 SALARIO"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "FERIAS": {
+      "descricao": "Ferias gozadas",
+      "tipo": "provento",
+      "variantes": [
+        "FERIAS",
+        "FERIAS GOZADAS",
+        "FERIAS NORMAIS",
+        "REMUNERACAO DE FERIAS",
+        "FERIAS PROPORCIONAIS",
+        "FERIAS INTEGRAIS",
+        "DIAS DE FERIAS",
+        "FERIAS VENCIDAS"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "TERCO_FERIAS": {
+      "descricao": "1/3 constitucional sobre ferias",
+      "tipo": "provento",
+      "variantes": [
+        "1 3 FERIAS",
+        "1 3 CONSTITUCIONAL",
+        "TERCO DE FERIAS",
+        "TERCO CONSTITUCIONAL",
+        "ADICIONAL 1 3 FERIAS",
+        "ABONO CONSTITUCIONAL",
+        "1 3 SOBRE FERIAS",
+        "TERCO FERIAS",
+        "1 3 CONSTITUCIONAL FERIAS",
+        "CONSTITUCIONAL SOBRE FERIAS",
+        "TERCO CONSTITUCIONAL FERIAS",
+        "ADICIONAL CONSTITUCIONAL FERIAS",
+        "1 3 SOBRE FERIAS GOZADAS"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "ABONO_PECUNIARIO": {
+      "descricao": "Venda de ferias (abono pecuniario)",
+      "tipo": "provento",
+      "variantes": [
+        "ABONO PECUNIARIO",
+        "VENDA DE FERIAS",
+        "ABONO DE FERIAS",
+        "CONVERSAO 1 3 FERIAS",
+        "ABONO PECUNIARIO FERIAS",
+        "VENDA 10 DIAS"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "DECIMO_TERCEIRO": {
+      "descricao": "13o salario / gratificacao natalina",
+      "tipo": "provento",
+      "variantes": [
+        "13 SALARIO",
+        "DECIMO TERCEIRO",
+        "GRATIFICACAO NATALINA",
+        "13o SALARIO",
+        "13 SAL",
+        "DECIMO TERCEIRO SALARIO",
+        "13 SALARIO INTEGRAL",
+        "13 SALARIO PROPORCIONAL",
+        "ADIANTAMENTO 13 SALARIO",
+        "1 PARCELA 13",
+        "2 PARCELA 13"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "GRATIFICACAO": {
+      "descricao": "Gratificacao (funcao, tempo de servico, liberalidade)",
+      "tipo": "provento",
+      "variantes": [
+        "GRATIFICACAO",
+        "GRATIFICACAO DE FUNCAO",
+        "GRATIFICACAO FUNCAO",
+        "GRATIF FUNCAO",
+        "GRATIFICACAO POR TEMPO DE SERVICO",
+        "GRATIFICACAO TEMPO SERVICO",
+        "GRATIF TEMPO",
+        "GRATIFICACAO DE CAIXA",
+        "QUEBRA DE CAIXA",
+        "GRATIFICACAO MENSAL",
+        "GRATIFICACAO ESPECIAL"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "SALARIO_FAMILIA": {
+      "descricao": "Salario familia (cota previdenciaria)",
+      "tipo": "provento",
+      "variantes": [
+        "SALARIO FAMILIA",
+        "SAL FAMILIA",
+        "SALARIO FAMILIA COTA",
+        "COTA SALARIO FAMILIA"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "SALARIO_MATERNIDADE": {
+      "descricao": "Salario maternidade",
+      "tipo": "provento",
+      "variantes": [
+        "SALARIO MATERNIDADE",
+        "SAL MATERNIDADE",
+        "LICENCA MATERNIDADE",
+        "AUXILIO MATERNIDADE"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "AUXILIO_DOENCA": {
+      "descricao": "Afastamento por auxilio-doenca / acidente",
+      "tipo": "informativo",
+      "variantes": [
+        "AUXILIO DOENCA",
+        "AFASTAMENTO INSS",
+        "AUXILIO ACIDENTE",
+        "LICENCA SAUDE",
+        "AFASTAMENTO DOENCA",
+        "ATESTADO MEDICO",
+        "PRIMEIROS 15 DIAS"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "FALTAS": {
+      "descricao": "Faltas e atrasos",
+      "tipo": "desconto",
+      "variantes": [
+        "FALTAS",
+        "DESCONTO DE FALTAS",
+        "FALTAS INJUSTIFICADAS",
+        "DIAS DE FALTA",
+        "HORAS FALTAS",
+        "ATRASOS",
+        "DESCONTO ATRASO",
+        "FALTA",
+        "DESC FALTAS",
+        "DSR SOBRE FALTAS",
+        "DSR FALTAS"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "PENSAO_ALIMENTICIA": {
+      "descricao": "Pensao alimenticia",
+      "tipo": "desconto",
+      "variantes": [
+        "PENSAO ALIMENTICIA",
+        "PENSAO",
+        "ALIMENTOS",
+        "DESCONTO PENSAO",
+        "PENSAO JUDICIAL",
+        "PENSAO ALIMENTICIA JUDICIAL"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "EMPRESTIMO": {
+      "descricao": "Emprestimo consignado / adiantamento a devolver",
+      "tipo": "desconto",
+      "variantes": [
+        "EMPRESTIMO",
+        "EMPRESTIMO CONSIGNADO",
+        "CONSIGNADO",
+        "DESCONTO EMPRESTIMO",
+        "PARCELA EMPRESTIMO",
+        "EMPRESTIMO BANCARIO",
+        "CREDITO CONSIGNADO"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "CONTRIBUICAO_SINDICAL": {
+      "descricao": "Contribuicoes sindicais e assistenciais",
+      "tipo": "desconto",
+      "variantes": [
+        "CONTRIBUICAO SINDICAL",
+        "MENSALIDADE SINDICAL",
+        "CONTRIBUICAO ASSISTENCIAL",
+        "CONTRIBUICAO CONFEDERATIVA",
+        "TAXA ASSISTENCIAL",
+        "DESCONTO SINDICAL",
+        "SINDICATO",
+        "MENSALIDADE ASSOCIATIVA"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "SEGURO_VIDA": {
+      "descricao": "Seguro de vida em grupo",
+      "tipo": "desconto",
+      "variantes": [
+        "SEGURO DE VIDA",
+        "SEGURO VIDA",
+        "SEGURO VIDA EM GRUPO",
+        "APOLICE SEGURO",
+        "SEGURO"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "FARMACIA": {
+      "descricao": "Convenio farmacia",
+      "tipo": "desconto",
+      "variantes": [
+        "FARMACIA",
+        "CONVENIO FARMACIA",
+        "DESCONTO FARMACIA",
+        "DROGARIA"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "ARREDONDAMENTO": {
+      "descricao": "Arredondamento de folha",
+      "tipo": "desconto",
+      "variantes": [
+        "ARREDONDAMENTO",
+        "ARRED",
+        "ARREDONDAMENTO FOLHA",
+        "DIFERENCA ARREDONDAMENTO"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "AVISO_PREVIO": {
+      "descricao": "Aviso previo indenizado / trabalhado",
+      "tipo": "provento",
+      "variantes": [
+        "AVISO PREVIO",
+        "AVISO PREVIO INDENIZADO",
+        "AVISO PREVIO TRABALHADO",
+        "INDENIZACAO AVISO PREVIO",
+        "AVISO INDENIZADO"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "MULTA_FGTS": {
+      "descricao": "Multa rescisoria de 40% do FGTS",
+      "tipo": "provento",
+      "variantes": [
+        "MULTA FGTS",
+        "MULTA 40",
+        "MULTA RESCISORIA",
+        "INDENIZACAO 40 FGTS",
+        "MULTA 40 FGTS"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "AJUDA_CUSTO": {
+      "descricao": "Ajuda de custo / diarias / reembolso",
+      "tipo": "provento",
+      "variantes": [
+        "AJUDA DE CUSTO",
+        "AJUDA CUSTO",
+        "DIARIAS",
+        "DIARIA",
+        "REEMBOLSO DE DESPESAS",
+        "AUXILIO COMBUSTIVEL",
+        "REEMBOLSO COMBUSTIVEL",
+        "AUXILIO QUILOMETRAGEM",
+        "AJUDA DE CUSTO MENSAL"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "AUXILIO_CRECHE": {
+      "descricao": "Auxilio creche / babá",
+      "tipo": "provento",
+      "variantes": [
+        "AUXILIO CRECHE",
+        "REEMBOLSO CRECHE",
+        "AUXILIO BABA",
+        "CRECHE"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "AUXILIO_EDUCACAO": {
+      "descricao": "Auxilio educacao / bolsa de estudo",
+      "tipo": "provento",
+      "variantes": [
+        "AUXILIO EDUCACAO",
+        "BOLSA DE ESTUDO",
+        "AUXILIO ESTUDO",
+        "REEMBOLSO EDUCACAO"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "SOBREAVISO": {
+      "descricao": "Sobreaviso / prontidao",
+      "tipo": "provento",
+      "variantes": [
+        "SOBREAVISO",
+        "HORAS SOBREAVISO",
+        "PRONTIDAO",
+        "HORAS PRONTIDAO",
+        "ADICIONAL SOBREAVISO"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "ADICIONAL_TRANSFERENCIA": {
+      "descricao": "Adicional de transferencia",
+      "tipo": "provento",
+      "variantes": [
+        "ADICIONAL DE TRANSFERENCIA",
+        "ADICIONAL TRANSFERENCIA",
+        "ADIC TRANSFERENCIA"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "DESCANSO_REMUNERADO": {
+      "descricao": "Repouso remunerado sobre variaveis",
+      "tipo": "provento",
+      "variantes": [
+        "REPOUSO REMUNERADO",
+        "DESCANSO REMUNERADO",
+        "REFLEXO DSR",
+        "REFLEXO SOBRE DSR"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "PRO_LABORE": {
+      "descricao": "Pro-labore de socio",
+      "tipo": "provento",
+      "variantes": [
+        "PRO LABORE",
+        "PROLABORE",
+        "PRO LABORE SOCIO",
+        "RETIRADA PRO LABORE",
+        "HONORARIOS SOCIO"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
     }
   }
 }

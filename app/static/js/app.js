@@ -1,6 +1,6 @@
 /* ── Sigma Contabilidade — Conferencia de Folha — JS ── */
 
-const FILES = {excel:[], pdf:[], word:[], fatura:[], extrato:[], anterior:[]};
+const FILES = {excel:[], pdf:[], word:[], fatura:[], extrato:[], anterior:[], implantacao:[]};
 
 // Estado global para auditoria consolidada
 const AUDIT_STATE = { folha: null, beneficio: null, mesAnterior: null, impostos: null };
@@ -1065,6 +1065,7 @@ function updateDocSummary(){
   if(FILES.anterior.length)  parts.push('<strong>'+FILES.anterior.length+'</strong> PDF (mes anterior)');
   if(FILES.fatura.length)    parts.push('<strong>'+FILES.fatura.length+'</strong> Fatura');
   if(FILES.extrato.length)   parts.push('<strong>'+FILES.extrato.length+'</strong> Extrato');
+  if(FILES.implantacao.length) parts.push('<strong>'+FILES.implantacao.length+'</strong> PDF (implantacao)');
   el.innerHTML='<span class="doc-summary-ok">&#10003; Carregado: '+parts.join(' &middot; ')+'</span>'
     +'<span style="font-size:.75rem;color:#6b7280;margin-left:.8rem">Use as abas de analise para processar</span>';
 }
@@ -1146,3 +1147,256 @@ document.addEventListener('DOMContentLoaded', function(){
   updateAllFileStatuses();
   updateDocSummary();
 });
+
+/* ═══════════════════════════════════════════
+   ABA: IMPLANTACAO — CLIENTE NOVO
+   ═══════════════════════════════════════════ */
+
+var IMPL_SID = 'impl-' + Math.random().toString(36).slice(2, 10);
+var IMPL_DATA = null;
+
+var CLASSE_INFO = {
+  fixa:             {label:'Fixa',              cor:'#0f766e', bg:'#ccfbf1', ajuda:'Mesmo valor todos os meses — cadastrar como evento fixo.'},
+  fixa_reajustada:  {label:'Fixa c/ reajuste',  cor:'#0369a1', bg:'#e0f2fe', ajuda:'Valor constante que mudou de patamar — usar o valor do ultimo mes.'},
+  variavel:         {label:'Variavel',          cor:'#b45309', bg:'#fef3c7', ajuda:'Muda todo mes — lancar mes a mes.'},
+  eventual:         {label:'Eventual',          cor:'#6d28d9', bg:'#ede9fe', ajuda:'Aparece so em alguns meses — lancar quando ocorrer.'},
+  calculada:        {label:'Calculada',         cor:'#6b7280', bg:'#f3f4f6', ajuda:'INSS / IRRF / FGTS — o sistema de destino recalcula. Nao importar.'}
+};
+
+function _badgeClasse(c){
+  var i = CLASSE_INFO[c] || {label:c, cor:'#6b7280', bg:'#f3f4f6', ajuda:''};
+  return '<span title="'+i.ajuda+'" style="display:inline-block;padding:.15rem .5rem;border-radius:10px;'
+       + 'font-size:.68rem;font-weight:700;color:'+i.cor+';background:'+i.bg+'">'+i.label+'</span>';
+}
+
+function _badgeGrav(g){
+  var m = {alta:['#991b1b','#fee2e2'], media:['#92400e','#fef3c7'], baixa:['#374151','#f3f4f6']};
+  var c = m[g] || m.baixa;
+  return '<span style="display:inline-block;padding:.1rem .45rem;border-radius:8px;font-size:.65rem;'
+       + 'font-weight:700;color:'+c[0]+';background:'+c[1]+'">'+g.toUpperCase()+'</span>';
+}
+
+async function analisarImplantacao(){
+  if(!FILES.implantacao.length){alert('Envie os contracheques em PDF do cliente novo.');return}
+  var btn = document.getElementById('btn-implantacao');
+  btn.disabled = true;
+  document.getElementById('loading-implantacao').style.display = 'block';
+  var res_el = document.getElementById('results-implantacao');
+  res_el.style.display = 'none';
+
+  var fd = new FormData();
+  FILES.implantacao.forEach(function(f,i){fd.append('arq_'+i, f)});
+  fd.append('sid', IMPL_SID);
+  if(document.getElementById('implantacao-ocr').checked) fd.append('ocr','1');
+
+  try{
+    var r = await fetch('/implantacao/analisar', {method:'POST', body:fd});
+    var data = await r.json();
+    IMPL_DATA = data;
+    renderImplantacao(data);
+  } catch(e){
+    show('<div class="err-box"><h4>Erro de comunicacao</h4><p>'+e.message+'</p></div>','results-implantacao');
+  } finally{
+    btn.disabled = false;
+    document.getElementById('loading-implantacao').style.display = 'none';
+  }
+}
+
+function renderImplantacao(d){
+  if(d.error){show('<div class="err-box"><h4>Erro</h4><p>'+d.error+'</p></div>','results-implantacao');return}
+
+  var r = d.resumo || {}, q = d.qualidade || {}, comps = d.competencias || [];
+  var h = '';
+
+  /* ── Cabecalho / dashboard ─────────────────────────── */
+  var pctOk = q.recibos ? Math.round(100*q.recibos_ok/q.recibos) : 0;
+  var corOk = pctOk >= 95 ? '#0f766e' : (pctOk >= 80 ? '#b45309' : '#991b1b');
+
+  h += '<div class="card"><h2>'+(r.empresa && r.empresa.nome ? r.empresa.nome : 'Cliente novo')+'</h2>'
+     + '<p>Periodo analisado: <strong>'+(r.periodo||'-')+'</strong> &middot; '+(r.meses||0)+' meses</p>';
+
+  h += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.7rem;margin:1rem 0">';
+  var kpis = [
+    ['Funcionarios', r.funcionarios||0, '#333'],
+    ['Rubricas fixas', r.rubricas_fixas||0, '#0f766e'],
+    ['Rubricas variaveis', r.rubricas_variaveis||0, '#b45309'],
+    ['Rubricas eventuais', r.rubricas_eventuais||0, '#6d28d9'],
+    ['Leitura conferida', pctOk+'%', corOk]
+  ];
+  kpis.forEach(function(k){
+    h += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:.8rem;text-align:center">'
+       + '<div style="font-size:1.5rem;font-weight:800;color:'+k[2]+'">'+k[1]+'</div>'
+       + '<div style="font-size:.7rem;color:#6b7280;text-transform:uppercase;letter-spacing:.4px">'+k[0]+'</div></div>';
+  });
+  h += '</div>';
+
+  h += '<div style="display:flex;gap:.6rem;flex-wrap:wrap">'
+     + '<button class="btn" style="width:auto;padding:.55rem 1.1rem" onclick="baixarImplantacao(\'mapa\')">Baixar mapa de rubricas</button>'
+     + '<button class="btn" style="width:auto;padding:.55rem 1.1rem" onclick="baixarImplantacao(\'importacao\')">Baixar planilha de importacao</button>'
+     + '<button class="btn" style="width:auto;padding:.55rem 1.1rem" onclick="baixarImplantacao(\'fichas\')">Baixar fichas (PDF)</button>'
+     + '</div></div>';
+
+  /* ── Alertas ───────────────────────────────────────── */
+  if((d.alertas||[]).length){
+    h += '<div class="card"><h2>Antes de importar</h2><table style="width:100%;border-collapse:collapse">';
+    d.alertas.forEach(function(a){
+      h += '<tr style="border-bottom:1px solid #f1f5f9">'
+         + '<td style="padding:.45rem .5rem;width:60px;vertical-align:top">'+_badgeGrav(a.gravidade||'baixa')+'</td>'
+         + '<td style="padding:.45rem .5rem;font-size:.82rem;color:#374151">'+(a.mensagem||'')
+         + (a.funcionario ? ' <em style="color:#9ca3af">('+a.funcionario+')</em>' : '')+'</td></tr>';
+    });
+    h += '</table></div>';
+  }
+
+  /* ── Massa salarial por competencia ────────────────── */
+  var pc = r.por_competencia || [];
+  if(pc.length){
+    var maxP = Math.max.apply(null, pc.map(function(p){return p.proventos})) || 1;
+    h += '<div class="card"><h2>Folha mes a mes</h2>'
+       + '<table style="width:100%;border-collapse:collapse;font-size:.82rem">'
+       + '<tr style="background:#f8fafc"><th style="text-align:left;padding:.4rem">Competencia</th>'
+       + '<th style="text-align:right;padding:.4rem">Func.</th>'
+       + '<th style="text-align:left;padding:.4rem;width:38%">Composicao</th>'
+       + '<th style="text-align:right;padding:.4rem">Proventos</th>'
+       + '<th style="text-align:right;padding:.4rem">Descontos</th>'
+       + '<th style="text-align:right;padding:.4rem">Liquido</th></tr>';
+    pc.forEach(function(p){
+      var w = Math.max(2, Math.round(100*p.proventos/maxP));
+      h += '<tr style="border-bottom:1px solid #f1f5f9">'
+         + '<td style="padding:.4rem"><strong>'+p.label+'</strong></td>'
+         + '<td style="padding:.4rem;text-align:right">'+p.funcionarios+'</td>'
+         + '<td style="padding:.4rem"><div style="background:#A72C31;height:14px;border-radius:3px;width:'+w+'%"></div></td>'
+         + '<td style="padding:.4rem;text-align:right">'+brl(p.proventos)+'</td>'
+         + '<td style="padding:.4rem;text-align:right;color:#991b1b">'+brl(p.descontos)+'</td>'
+         + '<td style="padding:.4rem;text-align:right;font-weight:700">'+brl(p.liquido)+'</td></tr>';
+    });
+    h += '</table></div>';
+  }
+
+  /* ── Catalogo de rubricas ──────────────────────────── */
+  h += '<div class="card"><h2>Rubricas encontradas</h2>'
+     + '<p style="font-size:.78rem;color:#6b7280">Passe o mouse na classificacao para ver o que fazer com cada uma.</p>'
+     + '<table style="width:100%;border-collapse:collapse;font-size:.8rem;margin-top:.6rem">'
+     + '<tr style="background:#f8fafc">'
+     + '<th style="text-align:left;padding:.4rem">Rubrica (origem)</th>'
+     + '<th style="text-align:left;padding:.4rem">Grupo Sigma</th>'
+     + '<th style="text-align:center;padding:.4rem">Tipo</th>'
+     + '<th style="text-align:center;padding:.4rem">Classificacao</th>'
+     + '<th style="text-align:right;padding:.4rem">Func.</th>'
+     + '<th style="text-align:right;padding:.4rem">Meses</th>'
+     + '<th style="text-align:right;padding:.4rem">Faixa de valor</th></tr>';
+  (d.catalogo_rubricas||[]).forEach(function(c){
+    var semGrupo = !c.mapeado;
+    h += '<tr style="border-bottom:1px solid #f1f5f9'+(semGrupo?';background:#fffbeb':'')+'">'
+       + '<td style="padding:.4rem"><strong>'+c.descricao+'</strong>'
+       + ((c.codigos_origem&&c.codigos_origem.length)?' <span style="color:#9ca3af;font-size:.7rem">cod '+c.codigos_origem.join('/')+'</span>':'')
+       + '</td>'
+       + '<td style="padding:.4rem">'+(semGrupo?'<span style="color:#b45309">definir</span>':c.grupo)+'</td>'
+       + '<td style="padding:.4rem;text-align:center">'+(c.tipo==='provento'?'+':'&minus;')+'</td>'
+       + '<td style="padding:.4rem;text-align:center">'+_badgeClasse(c.classe)+'</td>'
+       + '<td style="padding:.4rem;text-align:right">'+c.funcionarios+'</td>'
+       + '<td style="padding:.4rem;text-align:right">'+c.ocorrencias+'</td>'
+       + '<td style="padding:.4rem;text-align:right">'+brl(c.min)+(c.min!==c.max?' a '+brl(c.max):'')+'</td></tr>';
+  });
+  h += '</table></div>';
+
+  /* ── Eventos do periodo ────────────────────────────── */
+  if((d.eventos||[]).length){
+    h += '<div class="card"><h2>O que mudou no periodo</h2>'
+       + '<table style="width:100%;border-collapse:collapse;font-size:.8rem">'
+       + '<tr style="background:#f8fafc"><th style="text-align:left;padding:.4rem">Grav.</th>'
+       + '<th style="text-align:left;padding:.4rem">Competencia</th>'
+       + '<th style="text-align:left;padding:.4rem">Funcionario</th>'
+       + '<th style="text-align:left;padding:.4rem">Ocorrencia</th></tr>';
+    d.eventos.forEach(function(e){
+      h += '<tr style="border-bottom:1px solid #f1f5f9">'
+         + '<td style="padding:.4rem">'+_badgeGrav(e.gravidade)+'</td>'
+         + '<td style="padding:.4rem;white-space:nowrap">'+(e.competencia_label||e.competencia||'-')+'</td>'
+         + '<td style="padding:.4rem">'+(e.funcionario||'')+'</td>'
+         + '<td style="padding:.4rem"><strong>'+e.titulo+'</strong><br>'
+         + '<span style="color:#6b7280;font-size:.74rem">'+e.detalhe+'</span></td></tr>';
+    });
+    h += '</table></div>';
+  }
+
+  /* ── Fichas por funcionario ────────────────────────── */
+  h += '<div class="card"><h2>Funcionarios</h2>';
+  (d.funcionarios||[]).forEach(function(f, idx){
+    var id = 'impl-f-'+idx;
+    var ident = [f.cpf?('CPF '+f.cpf):'', f.matricula?('Mat. '+f.matricula):'',
+                 f.funcao||'', f.admissao?('Adm. '+f.admissao):''].filter(Boolean).join(' &middot; ');
+    h += '<div style="border:1px solid #e5e7eb;border-radius:10px;margin-bottom:.6rem;overflow:hidden">'
+       + '<div style="padding:.65rem .8rem;background:#f8fafc;cursor:pointer;display:flex;justify-content:space-between;align-items:center"'
+       + ' onclick="togDetail(\''+id+'\')">'
+       + '<div><strong>'+f.nome+'</strong><br><span style="font-size:.72rem;color:#6b7280">'+(ident||'&nbsp;')+'</span></div>'
+       + '<span style="font-size:.72rem;color:#6b7280">'+(f.meses_ativos||[]).length+' meses &middot; '
+       + (f.rubricas||[]).length+' rubricas</span></div>'
+       + '<div id="'+id+'" style="display:none;padding:.7rem .8rem">';
+
+    h += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.76rem">'
+       + '<tr style="background:#f8fafc"><th style="text-align:left;padding:.35rem">Rubrica</th>'
+       + '<th style="text-align:center;padding:.35rem">Classe</th>';
+    comps.forEach(function(c){h += '<th style="text-align:right;padding:.35rem;white-space:nowrap">'+c+'</th>'});
+    h += '</tr>';
+    (f.rubricas||[]).forEach(function(rb){
+      h += '<tr style="border-bottom:1px solid #f8fafc">'
+         + '<td style="padding:.35rem">'+(rb.tipo==='provento'?'+ ':'&minus; ')+rb.descricao+'</td>'
+         + '<td style="padding:.35rem;text-align:center">'+_badgeClasse(rb.classe)+'</td>';
+      comps.forEach(function(c){
+        var v = rb.valores[c];
+        h += '<td style="padding:.35rem;text-align:right;'+(v===undefined?'color:#d1d5db':'')+'">'
+           + (v===undefined?'-':brl(v))+'</td>';
+      });
+      h += '</tr>';
+    });
+    h += '<tr style="background:#f1f5f9;font-weight:700"><td style="padding:.35rem" colspan="2">LIQUIDO DO MES</td>';
+    comps.forEach(function(c){
+      var t = (f.totais_mes||{})[c];
+      var alerta = t && t.integridade === 'erro';
+      h += '<td style="padding:.35rem;text-align:right;'+(alerta?'color:#991b1b':'')+'" '
+         + (alerta?'title="Leitura deste mes nao fecha com os totais impressos"':'')+'>'
+         + (t?brl(t.liquido)+(alerta?' !':''):'-')+'</td>';
+    });
+    h += '</tr></table></div>';
+
+    if((f.eventos||[]).length){
+      h += '<div style="margin-top:.6rem"><strong style="font-size:.78rem">Ocorrencias</strong><ul style="margin:.3rem 0 0 1rem;font-size:.75rem;color:#374151">';
+      f.eventos.forEach(function(e){
+        h += '<li>'+e.titulo+' &mdash; <span style="color:#6b7280">'+e.detalhe+'</span></li>';
+      });
+      h += '</ul></div>';
+    }
+    h += '</div></div>';
+  });
+  h += '</div>';
+
+  if((d.erros||[]).length){
+    h += '<div class="card"><h2>Arquivos nao processados</h2><ul style="font-size:.8rem;color:#991b1b;margin-left:1rem">';
+    d.erros.forEach(function(e){h += '<li>'+e+'</li>'});
+    h += '</ul></div>';
+  }
+
+  show(h, 'results-implantacao');
+}
+
+function baixarImplantacao(tipo){
+  window.location = '/implantacao/exportar/'+tipo+'?sid='+encodeURIComponent(IMPL_SID);
+}
+
+async function listarLayouts(){
+  var el = document.getElementById('lista-layouts');
+  el.innerHTML = '<span style="font-size:.8rem;color:#6b7280">Carregando...</span>';
+  try{
+    var r = await fetch('/implantacao/layouts');
+    var d = await r.json();
+    var h = '<table style="width:100%;border-collapse:collapse;font-size:.78rem">';
+    (d.perfis||[]).forEach(function(p){
+      h += '<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:.3rem">'+p.nome+'</td>'
+         + '<td style="padding:.3rem;color:#6b7280">'+p.colunas+'</td>'
+         + '<td style="padding:.3rem;text-align:right;color:#9ca3af">'+(p.aprendido?'aprendido':'nativo')+'</td></tr>';
+    });
+    el.innerHTML = h + '</table>';
+  } catch(e){
+    el.innerHTML = '<span style="font-size:.8rem;color:#991b1b">Falha ao listar: '+e.message+'</span>';
+  }
+}

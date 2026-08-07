@@ -1,0 +1,238 @@
+{
+  "_meta": {
+    "versao": "1.0",
+    "descricao": "Perfis de layout de holerite/folha por sistema de origem — Sigma Contabilidade",
+    "instrucoes": [
+      "'fingerprints' sao trechos procurados no texto do PDF (MAIUSCULO, SEM ACENTO, SEM PONTUACAO).",
+      "Quanto mais especifico o fingerprint, melhor — evite palavras genericas como 'FOLHA' ou 'RECIBO'.",
+      "'colunas' descreve como valores sao impressos: 'prov_desc' = duas colunas (vencimentos|descontos); 'unica' = uma coluna so.",
+      "'aprendidos' e preenchido pela tela de conferencia assistida — nao edite a mao sem necessidade.",
+      "O motor funciona SEM perfil (modo generico). O perfil so aumenta a confianca da leitura."
+    ],
+    "ultimo_update": "2026-08-07"
+  },
+  "rotulos_globais": {
+    "total_proventos": [
+      "TOTAL DE VENCIMENTOS",
+      "TOTAL DE PROVENTOS",
+      "TOTAL VENCIMENTOS",
+      "TOTAL PROVENTOS",
+      "TOTAL DOS VENCIMENTOS",
+      "TOTAL DE CREDITOS",
+      "TOTAL BRUTO",
+      "VENCIMENTOS",
+      "PROVENTOS",
+      "TOTAL RENDIMENTOS"
+    ],
+    "total_descontos": [
+      "TOTAL DE DESCONTOS",
+      "TOTAL DESCONTOS",
+      "TOTAL DOS DESCONTOS",
+      "TOTAL DE DEBITOS",
+      "TOTAL DEDUCOES",
+      "DESCONTOS"
+    ],
+    "liquido": [
+      "VALOR LIQUIDO",
+      "LIQUIDO A RECEBER",
+      "TOTAL LIQUIDO",
+      "LIQUIDO",
+      "VALOR A RECEBER",
+      "LIQUIDO DA FOLHA",
+      "NET"
+    ],
+    "base_inss": [
+      "BASE INSS",
+      "BASE DE CALCULO INSS",
+      "SAL CONTR INSS",
+      "SALARIO CONTRIBUICAO",
+      "BASE PREV",
+      "BASE CALC INSS"
+    ],
+    "base_fgts": [
+      "BASE FGTS",
+      "BASE DE CALCULO FGTS",
+      "BASE CALC FGTS"
+    ],
+    "fgts_mes": [
+      "FGTS DO MES",
+      "FGTS MES",
+      "VALOR FGTS",
+      "FGTS RECOLHIDO",
+      "FGTS"
+    ],
+    "base_irrf": [
+      "BASE IRRF",
+      "BASE DE CALCULO IRRF",
+      "BASE IRF",
+      "BASE CALC IRRF",
+      "BASE IR"
+    ],
+    "salario_base": [
+      "SALARIO BASE",
+      "SALARIO CONTRATUAL",
+      "SAL BASE",
+      "SALARIO NOMINAL",
+      "REMUNERACAO"
+    ],
+    "matricula": [
+      "MATRICULA",
+      "CODIGO",
+      "COD",
+      "REGISTRO",
+      "CHAPA",
+      "MATR"
+    ],
+    "funcionario": [
+      "FUNCIONARIO",
+      "NOME DO FUNCIONARIO",
+      "COLABORADOR",
+      "EMPREGADO",
+      "NOME DO EMPREGADO",
+      "NOME"
+    ],
+    "funcao": [
+      "FUNCAO",
+      "CARGO",
+      "CBO FUNCAO",
+      "DESCRICAO DO CARGO"
+    ],
+    "admissao": [
+      "ADMISSAO",
+      "DATA DE ADMISSAO",
+      "DT ADMISSAO",
+      "ADMITIDO EM"
+    ],
+    "departamento": [
+      "DEPARTAMENTO",
+      "SETOR",
+      "LOTACAO",
+      "CENTRO DE CUSTO",
+      "DEPTO"
+    ]
+  },
+  "perfis": {
+    "dominio": {
+      "nome": "Domínio / Thomson Reuters",
+      "fingerprints": [
+        "DOMINIO SISTEMAS",
+        "DOMINIOSISTEMAS",
+        "THOMSON REUTERS",
+        "DOMINIO ATENDIMENTO"
+      ],
+      "colunas": "unica",
+      "nome_regex": "\\b\\d{1,4}\\s+([A-Z][A-Z ]{4,50}?)\\s+\\d{6}\\b",
+      "obs": "Layout de origem do app; verbas com codigo 2-4 digitos e coluna unica de valor."
+    },
+    "questor": {
+      "nome": "Questor",
+      "fingerprints": [
+        "QUESTOR SISTEMAS",
+        "QUESTOR NG",
+        "WWW QUESTOR COM BR"
+      ],
+      "colunas": "prov_desc"
+    },
+    "alterdata": {
+      "nome": "Alterdata (Pack/Ponto)",
+      "fingerprints": [
+        "ALTERDATA",
+        "PACK FOLHA",
+        "ALTERDATA SOFTWARE"
+      ],
+      "colunas": "prov_desc"
+    },
+    "contmatic": {
+      "nome": "Contmatic Phoenix",
+      "fingerprints": [
+        "CONTMATIC",
+        "PHOENIX FOLHA",
+        "CONTMATIC PHOENIX"
+      ],
+      "colunas": "prov_desc"
+    },
+    "fortes": {
+      "nome": "Fortes (AC Fortes)",
+      "fingerprints": [
+        "FORTES TECNOLOGIA",
+        "AC FORTES",
+        "FORTES PESSOAL"
+      ],
+      "colunas": "prov_desc"
+    },
+    "sci": {
+      "nome": "SCI Visual Practice",
+      "fingerprints": [
+        "SCI SISTEMAS",
+        "SCI NFP",
+        "SCI CONTABIL",
+        "SCI VISUAL",
+        "VISUAL PRACTICE"
+      ],
+      "colunas": "secoes",
+      "obs": "Espelho da folha: PROVENTOS e DESCONTOS em tabelas lado a lado, varios funcionarios por pagina."
+    },
+    "folhamatic": {
+      "nome": "Folhamatic / Sage",
+      "fingerprints": [
+        "FOLHAMATIC",
+        "SAGE FOLHAMATIC",
+        "SAGE BRASIL"
+      ],
+      "colunas": "prov_desc"
+    },
+    "metadados": {
+      "nome": "Metadados",
+      "fingerprints": [
+        "METADADOS",
+        "METADADOS RH"
+      ],
+      "colunas": "prov_desc"
+    },
+    "senior": {
+      "nome": "Senior Sistemas",
+      "fingerprints": [
+        "SENIOR SISTEMAS",
+        "SENIOR HCM",
+        "RUBI FOLHA"
+      ],
+      "colunas": "prov_desc"
+    },
+    "totvs": {
+      "nome": "TOTVS (Protheus / RM / Datasul)",
+      "fingerprints": [
+        "TOTVS",
+        "PROTHEUS",
+        "TOTVS RM",
+        "DATASUL",
+        "MICROSIGA"
+      ],
+      "colunas": "prov_desc"
+    },
+    "nasajon": {
+      "nome": "Nasajon",
+      "fingerprints": [
+        "NASAJON",
+        "NASAJON SISTEMAS"
+      ],
+      "colunas": "prov_desc"
+    },
+    "prosoft": {
+      "nome": "Prosoft",
+      "fingerprints": [
+        "PROSOFT TECNOLOGIA",
+        "PROSOFT FOLHA"
+      ],
+      "colunas": "prov_desc"
+    },
+    "mastermaq": {
+      "nome": "Mastermaq",
+      "fingerprints": [
+        "MASTERMAQ",
+        "MASTERMAQ SOFTWARES"
+      ],
+      "colunas": "prov_desc"
+    }
+  },
+  "aprendidos": {}
+}

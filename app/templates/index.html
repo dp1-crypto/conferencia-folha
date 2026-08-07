@@ -35,6 +35,7 @@
     <button class="tab" onclick="switchTab('impostos')">INSS / IRRF</button>
     <button class="tab" onclick="switchTab('beneficio')">Beneficios</button>
     <button class="tab" onclick="switchTab('auditoria')">Auditoria</button>
+    <button class="tab" onclick="switchTab('implantacao')">Implantacao</button>
     <button class="tab" onclick="switchTab('config')">Configuracoes</button>
   </div>
 
@@ -167,6 +168,45 @@
   </div>
 
   <!-- ═══════════════════════════════════════════
+       ABA: IMPLANTACAO — CLIENTE NOVO
+       ═══════════════════════════════════════════ -->
+  <div class="section" id="section-implantacao">
+
+    <div class="card">
+      <h2>Implantacao — Cliente Novo</h2>
+      <p>Envie os contracheques dos ultimos meses do escritorio anterior. O sistema le todos,
+         separa por competencia e funcionario, identifica quais rubricas sao fixas e quais sao
+         variaveis, e mostra tudo que mudou no periodo.</p>
+
+      <div class="zone" id="zone-implantacao"
+           ondragover="drag(event,'implantacao')" ondragleave="undrag(event,'implantacao')"
+           ondrop="drop(event,'implantacao')">
+        <input type="file" id="file-implantacao" accept=".pdf" multiple onchange="sel('implantacao',this)">
+        <label for="file-implantacao">
+          <div class="zone-icon">PDF</div>
+          <div class="zone-title">Contracheques / extratos de folha</div>
+          <div class="zone-sub">Varios meses de uma vez — arraste ou clique</div>
+          <div class="fname" id="fname-implantacao"></div>
+        </label>
+      </div>
+
+      <label style="display:flex;align-items:center;gap:.5rem;margin:.9rem 0;font-size:.82rem;color:#4b5563">
+        <input type="checkbox" id="implantacao-ocr">
+        Forcar OCR (use so quando o PDF for escaneado e vier vazio)
+      </label>
+
+      <button class="btn" id="btn-implantacao" onclick="analisarImplantacao()">Analisar Folha do Cliente</button>
+    </div>
+
+    <div id="loading-implantacao" class="loading">
+      <div class="spinner"></div>
+      <p style="color:#6b7280;font-size:.88rem">Lendo os contracheques e cruzando as competencias...</p>
+    </div>
+
+    <div id="results-implantacao"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
        ABA 3: MES ANTERIOR
        ═══════════════════════════════════════════ -->
   <div id="section-anterior" class="section">
@@ -292,6 +332,15 @@
     <div class="card">
       <h2>Configuracoes</h2>
       <p>Gerencie as equivalencias de rubricas e parametros do sistema.</p>
+    </div>
+
+    <div class="config-card">
+      <h3>Layouts de Folha Aprendidos</h3>
+      <p>Perfis de sistemas de folha reconhecidos pelo motor de leitura. Layouts novos sao aprendidos na aba Implantacao.</p>
+      <div style="margin-top:.8rem">
+        <button class="btn" style="width:auto;padding:.6rem 1.5rem" onclick="listarLayouts()">Ver Layouts</button>
+      </div>
+      <div id="lista-layouts" style="margin-top:.8rem"></div>
     </div>
 
     <div class="config-card">

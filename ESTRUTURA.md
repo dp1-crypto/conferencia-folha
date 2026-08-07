@@ -64,13 +64,97 @@
 
 ---
 
+## Módulo Implantação — Cliente Novo (ago/2026)
+
+Lê contracheques de **qualquer** sistema de folha (escritório anterior) e monta
+a análise para migrar a folha sem erro.
+
+### Serviços
+
+| Arquivo | O que faz |
+|---------|-----------|
+| `app/core/textutils.py` | Competência, CPF/CNPJ com dígito verificador, valores BR |
+| `app/services/pdf_grid.py` | Extração por **coordenadas** (words → linhas → colunas) + OCR |
+| `app/services/layout_profiles.py` | Fingerprint do sistema de origem + layouts aprendidos |
+| `app/services/holerite_parser.py` | Holerite → recibos normalizados + validação de integridade |
+| `app/services/implantacao.py` | Rubricas fixas × variáveis, variações do período, alertas |
+| `app/services/implantacao_export.py` | Mapa de rubricas, planilha de importação, fichas PDF |
+| `app/routes/implantacao_routes.py` | `/implantacao/analisar`, `/exportar/<tipo>`, `/layouts` |
+| `layouts-folha.json` | 13 perfis de sistemas + rótulos globais + aprendidos |
+
+### Como ele não erra calado
+
+1. **Coordenadas, não regex fixo** — a coluna em que o valor foi impresso separa
+   provento de desconto, funcionando em layout desconhecido.
+2. **Posição dos totais define as colunas** — inclusive dentro de cada seção.
+   Não dá para assumir "a coluna mais à direita é o valor": o espelho do SCI
+   imprime FGTS depois dos descontos e ela roubaria o papel.
+3. **Validação de integridade obrigatória** — `proventos − descontos = líquido
+   impresso`. Não fechou, o recibo vira "leitura duvidosa" e aparece em alerta.
+4. **Conferência contra o resumo do relatório** — a soma extraída tem que bater
+   com o RESUMO GERAL impresso, em valor e em quantidade de funcionários. É o
+   que prova que nenhuma página ficou de fora.
+5. **Autocorreção de classificação** — se a soma dos descontos não bate por
+   exatamente o valor de uma rubrica, ela é reclassificada e o ajuste é logado.
+6. **Chave por CPF** (fallback matrícula, depois nome) — homônimo não colide.
+   Rubrica é chaveada pelo **código de origem**, que não sofre quebra de texto.
+7. **Texto quebrado é reparado antes de tudo** — `599 , 72` → `599,72`,
+   `F o l h a` → `Folha`. Detecção estrutural compara sem espaços, senão
+   `Total de pro v entos` deixa de ser fim de bloco e funde dois funcionários.
+
+### Formatos suportados
+
+| Formato | Exemplo | Como é lido |
+|---------|---------|-------------|
+| Holerite, duas colunas | Questor, Alterdata | Vencimentos e Descontos em colunas |
+| Holerite, coluna única | Domínio | Lado sai pelo nome da rubrica |
+| Espelho da folha | SCI Visual Practice | Duas tabelas lado a lado, N func/página |
+
+### Validado com folha real (ago/2026)
+
+3 empresas × 2 competências, 438 recibos: **100% com integridade OK** e soma
+idêntica ao resumo do relatório (funcionários, proventos e descontos).
+1 recibo ficou sem nome identificado — sinalizado em alerta, valores corretos.
+
+### Classificação de rubricas
+
+| Classe | Significado | O que fazer |
+|--------|-------------|-------------|
+| `fixa` | Mesmo valor todos os meses | Evento fixo no cadastro |
+| `fixa_reajustada` | Constante que mudou de patamar | Evento fixo com o último valor |
+| `variavel` | Muda todo mês | Lançar mês a mês |
+| `eventual` | Só em alguns meses, sem continuidade | Lançar quando ocorrer |
+| `calculada` | INSS / IRRF / FGTS | Não importar — o destino recalcula |
+
+### Pendente
+
+- Preencher `codigo_destino` de cada grupo em `rubricas-equivalentes.json` com
+  os códigos do Domínio da Sigma. Sem isso o mapa sai com a coluna em branco.
+- Cadastrar as rubricas do SCI ainda sem equivalência (Ajuda de Custos,
+  Seg. de Vida em Grupo, FERIADO HE, INT INTRAJORNADA, Gratificações).
+- OCR exige `brew install tesseract tesseract-lang && pip3 install pytesseract`.
+- Aba de conferência assistida (ensinar layout pela tela) — backend pronto
+  (`/implantacao/layouts/aprender`), falta a interface.
+- Deploy na VPS não foi feito.
+
+### Premissa importante
+
+Uma análise = **uma empresa**. A rubrica é chaveada pelo código de origem, que
+só é único dentro do mesmo sistema/empresa. Misturar arquivos de clientes
+diferentes na mesma análise faz códigos colidirem.
+
+---
+
 ## Arquivos do projeto
 
 | Arquivo | O que é |
 |---------|---------|
-| `app.py` | Tudo — backend, rotas, template HTML/CSS/JS |
-| `rubricas-equivalentes.json` | 15 grupos de rubricas, editável em runtime via `/recarregar-rubricas` |
-| `tests.py` | 54 testes unitários (546 linhas), unittest puro |
+| `app.py` | Shim de compatibilidade; o app real está em `app/` |
+| `rubricas-equivalentes.json` | 43 grupos de rubricas (v2.0), com `codigo_destino` |
+| `layouts-folha.json` | Perfis de layout de folha por sistema de origem |
+| `tests.py` | 54 testes das abas originais |
+| `tests_implantacao.py` | 48 testes do motor de implantação |
+| `tests_fixtures.py` | Gerador de holerites sintéticos para teste |
 | `requirements.txt` | Dependências Python |
 | `Dockerfile` | Build para deploy |
 
