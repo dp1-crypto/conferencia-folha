@@ -239,12 +239,24 @@ def _repara_letras_soltas(row: list, gap_max: float = 3.5, minimo: int = 4) -> l
     return saida
 
 
+# Codigo de rubrica com separador de milhar: 9.101, 6.051, 9.002
+RE_CODIGO = re.compile(r"^\d{1,3}(?:\.\d{3})+$")
+
+
 def _repara_numeros(row: list, gap_max: float = 3.0) -> list:
     """
-    Remonta valor partido pela extracao ('599 , 72' -> '599,72').
-    So junta quando o resultado e um valor monetario valido — assim nunca
-    cola dois valores de colunas diferentes.
+    Remonta numero partido pela extracao:
+      '599 , 72'   -> '599,72'   (valor)
+      '9.1 0 1'    -> '9.101'    (codigo da rubrica)
+
+    So junta quando o resultado e um valor monetario ou um codigo validos —
+    assim nunca cola dois numeros de colunas diferentes. Sem o caso do codigo,
+    a mesma rubrica aparecia duas vezes no de-para: uma como 9.101 e outra
+    como um codigo vazio com a descricao suja.
     """
+    def _fechado(t):
+        return is_money(t) or RE_CODIGO.match(t)
+
     saida, i = [], 0
     while i < len(row):
         melhor = None
@@ -254,8 +266,11 @@ def _repara_numeros(row: list, gap_max: float = 3.0) -> list:
                 break
             texto += row[j]["text"]
             x1 = row[j]["x1"]
-            if is_money(texto):
+            if _fechado(texto):
                 melhor = (j, texto, x1)
+        # A guarda olha so para valor monetario ja completo. Usar _fechado aqui
+        # seria um bug sutil: '3.266' (esperando o ',00') parece um codigo
+        # valido, a juncao pararia ali e o valor da verba se perderia.
         if melhor and not is_money(row[i]["text"]):
             j, texto, x1 = melhor
             novo = dict(row[i])

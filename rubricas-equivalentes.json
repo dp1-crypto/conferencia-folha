@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "versao": "2.0",
+    "versao": "2.1",
     "descricao": "Equivalências de rubricas — Sigma Contabilidade",
     "instrucoes": [
       "Adicione novas variações de nomes nas listas 'variantes' conforme aparecerem nos documentos.",
@@ -187,7 +187,8 @@
         "ADIANTAMENTO QUINZENAL",
         "ADTO SALARIAL",
         "ADTO",
-        "1 PARCELA SALARIO"
+        "1 PARCELA SALARIO",
+        "ADIANTAMENTO SALARIO"
       ],
       "codigo_destino": "",
       "obs_destino": ""
@@ -237,7 +238,14 @@
         "ADICIONAL HORA EXTRA",
         "EXTRA",
         "HORA EXTRA 50 PORCENTO",
-        "HORA EXTRA 100 PORCENTO"
+        "HORA EXTRA 100 PORCENTO",
+        "FERIADO HE",
+        "FERIADO HE 100",
+        "HE FERIADO",
+        "HE 100 NOTU FERIADO",
+        "HE NOTURNA FERIADO",
+        "DSR HORAS EXTRAS",
+        "D S R HORAS EXTRAS"
       ],
       "codigo_destino": "",
       "obs_destino": ""
@@ -311,7 +319,10 @@
         "ORDENADO",
         "VENCIMENTO BASE",
         "REMUNERACAO MENSAL",
-        "SALARIO FIXO"
+        "SALARIO FIXO",
+        "SALARIO HORISTA",
+        "SALDO SALARIO",
+        "SALDO DE SALARIO"
       ],
       "codigo_destino": "",
       "obs_destino": ""
@@ -333,7 +344,11 @@
         "INSS 13 SALARIO",
         "INSS FERIAS",
         "I N S S SOBRE SALARIO",
-        "PREV SOCIAL"
+        "PREV SOCIAL",
+        "INSS 13",
+        "I N S S 13",
+        "INSS CONTRIB INDIV",
+        "INSS CONTRIBUINTE INDIVIDUAL"
       ],
       "codigo_destino": "",
       "obs_destino": ""
@@ -354,7 +369,11 @@
         "DESCONTO IRRF",
         "IRRF 13 SALARIO",
         "IRRF FERIAS",
-        "IMPOSTO DE RENDA RETIDO NA FONTE"
+        "IMPOSTO DE RENDA RETIDO NA FONTE",
+        "IR",
+        "I R",
+        "I R 13",
+        "IR 13"
       ],
       "codigo_destino": "",
       "obs_destino": ""
@@ -387,7 +406,18 @@
         "FERIAS PROPORCIONAIS",
         "FERIAS INTEGRAIS",
         "DIAS DE FERIAS",
-        "FERIAS VENCIDAS"
+        "FERIAS VENCIDAS",
+        "RESCISAO FERIAS PROP",
+        "RESC FERIAS MEDIA HE",
+        "RESC FERIAS MEDIA RV",
+        "RESC FERIAS PROP",
+        "RESC FER MED HE",
+        "RESC FER MED RV",
+        "RESC 1 12 FER IND",
+        "R 1 12 FER IND M HE",
+        "R 1 12 FER IND M RV",
+        "RESC 1 12 FERIAS IND",
+        "FERIAS INDENIZADAS"
       ],
       "codigo_destino": "",
       "obs_destino": ""
@@ -408,7 +438,11 @@
         "CONSTITUCIONAL SOBRE FERIAS",
         "TERCO CONSTITUCIONAL FERIAS",
         "ADICIONAL CONSTITUCIONAL FERIAS",
-        "1 3 SOBRE FERIAS GOZADAS"
+        "1 3 SOBRE FERIAS GOZADAS",
+        "RESC 1 3 FERIAS PROP",
+        "RESC 1 3 FER IND",
+        "R 1 3 FERIAS",
+        "RESC 1 3 FERIAS IND"
       ],
       "codigo_destino": "",
       "obs_destino": ""
@@ -441,7 +475,16 @@
         "13 SALARIO PROPORCIONAL",
         "ADIANTAMENTO 13 SALARIO",
         "1 PARCELA 13",
-        "2 PARCELA 13"
+        "2 PARCELA 13",
+        "RESCISAO 13 SALARIO",
+        "RESC 13 SALARIO",
+        "RESC 13 MED HE",
+        "RESC 13 MED RV",
+        "RESC 13 1 12 IND",
+        "RESC 13 1 12 IND MHE",
+        "RESC 13 1 12 IND MRV",
+        "RESC 13 MEDIA HE",
+        "RESC 13 MEDIA RV"
       ],
       "codigo_destino": "",
       "obs_destino": ""
@@ -460,7 +503,8 @@
         "GRATIFICACAO DE CAIXA",
         "QUEBRA DE CAIXA",
         "GRATIFICACAO MENSAL",
-        "GRATIFICACAO ESPECIAL"
+        "GRATIFICACAO ESPECIAL",
+        "GRATIFICACOES"
       ],
       "codigo_destino": "",
       "obs_destino": ""
@@ -518,7 +562,10 @@
         "FALTA",
         "DESC FALTAS",
         "DSR SOBRE FALTAS",
-        "DSR FALTAS"
+        "DSR FALTAS",
+        "FALTAS N JUST HORAS",
+        "FALTAS NAO JUSTIFICADAS",
+        "FALTAS N JUSTIFICADAS"
       ],
       "codigo_destino": "",
       "obs_destino": ""
@@ -576,7 +623,11 @@
         "SEGURO VIDA",
         "SEGURO VIDA EM GRUPO",
         "APOLICE SEGURO",
-        "SEGURO"
+        "SEGURO",
+        "SEG DE VIDA EM GRUPO",
+        "SEG VIDA EM GRUPO",
+        "SEG DE VIDA",
+        "SEGURO DE VIDA EM GRUPO"
       ],
       "codigo_destino": "",
       "obs_destino": ""
@@ -600,7 +651,10 @@
         "ARREDONDAMENTO",
         "ARRED",
         "ARREDONDAMENTO FOLHA",
-        "DIFERENCA ARREDONDAMENTO"
+        "DIFERENCA ARREDONDAMENTO",
+        "ARRED PROV FOLHA",
+        "ARRED PROVENTO FOLHA",
+        "ESTOURO PROVENTO"
       ],
       "codigo_destino": "",
       "obs_destino": ""
@@ -613,7 +667,11 @@
         "AVISO PREVIO INDENIZADO",
         "AVISO PREVIO TRABALHADO",
         "INDENIZACAO AVISO PREVIO",
-        "AVISO INDENIZADO"
+        "AVISO INDENIZADO",
+        "RESC AV PREVIO IND",
+        "RESCISAO AV PREVIO",
+        "RESC AVISO PREVIO",
+        "AVISO PREVIO INDENIZADO RESC"
       ],
       "codigo_destino": "",
       "obs_destino": ""
@@ -643,7 +701,9 @@
         "AUXILIO COMBUSTIVEL",
         "REEMBOLSO COMBUSTIVEL",
         "AUXILIO QUILOMETRAGEM",
-        "AJUDA DE CUSTO MENSAL"
+        "AJUDA DE CUSTO MENSAL",
+        "AJUDA DE CUSTOS",
+        "AJUDA CUSTOS"
       ],
       "codigo_destino": "",
       "obs_destino": ""
@@ -717,6 +777,48 @@
         "PRO LABORE SOCIO",
         "RETIRADA PRO LABORE",
         "HONORARIOS SOCIO"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "INTERVALO_INTRAJORNADA": {
+      "descricao": "Intervalo intrajornada suprimido — indenizatorio apos a Reforma de 2017 (CLT 71 §4)",
+      "tipo": "provento",
+      "variantes": [
+        "INT INTRAJORNADA",
+        "INT INTRAJORNADA 50",
+        "INTERVALO INTRAJORNADA",
+        "INT INTRAJ NOT",
+        "INT INTRAJ NOT 50",
+        "INTERVALO INTRAJORNADA NOTURNO",
+        "INTRAJORNADA",
+        "INTERVALO NAO CONCEDIDO"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "INDENIZACAO_RESCISORIA": {
+      "descricao": "Indenizacao por termino antecipado de contrato (CLT 479/480)",
+      "tipo": "provento",
+      "variantes": [
+        "INDENIZACAO ART",
+        "INDENIZACAO ART 479",
+        "INDENIZACAO ART 480",
+        "IND TERMINO CONTRATO",
+        "INDENIZACAO TERMINO CONTRATO",
+        "INDENIZACAO RESCISORIA"
+      ],
+      "codigo_destino": "",
+      "obs_destino": ""
+    },
+    "FALTA_JUSTIFICADA": {
+      "descricao": "Falta abonada / justificada — remunerada, nao descontada",
+      "tipo": "provento",
+      "variantes": [
+        "FALTAS JUST HORAS",
+        "FALTA JUSTIFICADA",
+        "FALTAS JUSTIFICADAS",
+        "FALTA ABONADA"
       ],
       "codigo_destino": "",
       "obs_destino": ""
