@@ -383,8 +383,17 @@ _STOP = {"DE", "DA", "DO", "DOS", "DAS", "E", "A", "O", "S", "EM", "NO", "NA",
 
 
 def _palavras(t: str) -> set:
-    """Palavras significativas de uma rubrica ja normalizada."""
-    return {w for w in t.split() if len(w) > 2 and w not in _STOP}
+    """
+    Palavras significativas de uma rubrica ja normalizada.
+
+    Numero entra sempre, mesmo com 1 digito: em folha o numero E o que
+    distingue ('13 SALARIO' x 'SALARIO', '1/3 FERIAS' x '1/12 FERIAS').
+    Sigla de 2 letras tambem entra — descartar o 'VT' de 'DESC VT' deixava a
+    variante valendo so 'DESC', e ela passava a casar com qualquer desconto.
+    Fica de fora apenas conectivo e letra solta (lixo de quebra de texto).
+    """
+    return {w for w in t.split()
+            if w not in _STOP and (w.isdigit() or len(w) >= 2)}
 
 
 def colapsa_siglas(texto: str) -> str:
